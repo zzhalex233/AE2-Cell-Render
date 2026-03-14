@@ -11,6 +11,7 @@
 - 为ME驱动器已插入的槽位渲染对应存储元件的主要颜色
 - 驱动器未连接ME网络时不渲染颜色
 - 仅修改客户端渲染
+- 通过分析对应元件贴图来计算主色，支持mod元件&资源包
 
 ## 依赖
 
@@ -32,6 +33,7 @@
 - Renders each occupied `ME Drive` slot using the main color of the inserted storage cell
 - Hides the color overlay when the drive is not connected to an active ME network
 - Client-side rendering only
+- Calculatingn the main color by analysing the cell's texture, technically support mod's cell & resourcepack
 
 ## Dependencies
 
@@ -41,3 +43,7 @@
 
 - Download from the Releases page
 
+
+## Gallery
+![](gallery/1.png)
+![](gallery/2.png)
