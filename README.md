@@ -1,6 +1,6 @@
 ﻿# AE2 Cell Render - 1.12.2
 
-简体中文 | [English]()
+简体中文 | [English](https://github.com/zzhalex233/AE2-Cell-Render/blob/main/README-en_us.md)
 
 ---
 ## 模组
