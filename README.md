@@ -1,10 +1,10 @@
 ﻿# AE2 Cell Render - 1.12.2
 
-简体中文 | [English](#english)
+简体中文 | [English]()
 
 ---
 ## 模组
-- `ME驱动器`的元件颜色渲染
+- 模仿高版本的`ME驱动器`的元件颜色渲染
 
 ## 功能
 
@@ -21,29 +21,12 @@
 
 - 在 Release 页面下载
 
+## 灵感来源
+
+![](gallery/meme.png)
+
 ---
 
-## English
-
-## Mod
-- AE2 `ME Drive` cell color rendering
-
-## Features
-
-- Renders each occupied `ME Drive` slot using the main color of the inserted storage cell
-- Hides the color overlay when the drive is not connected to an active ME network
-- Client-side rendering only
-- Calculatingn the main color by analysing the cell's texture, technically support mod's cell & resourcepack
-
-## Dependencies
-
-- Required: [AE2UEL](https://github.com/AE2-UEL/Applied-Energistics-2)
-
-## Download
-
-- Download from the Releases page
-
-
-## Gallery
+## 画廊
 ![](gallery/1.png)
 ![](gallery/2.png)
