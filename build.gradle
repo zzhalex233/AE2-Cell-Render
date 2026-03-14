@@ -1,0 +1,162 @@
+plugins {
+    id 'java'
+    id 'java-library'
+    id 'maven-publish'
+    id 'xyz.wagyourtail.unimined' version '1.4.10-kappa'
+}
+
+apply from: 'gradle/scripts/helpers.gradle'
+
+def targetJavaVersion = 8
+
+assertProperty 'mod_version'
+assertProperty 'root_package'
+assertProperty 'mod_id'
+assertProperty 'mod_name'
+
+setDefaultProperty 'generate_sources_jar', true, false
+setDefaultProperty 'generate_javadocs_jar', true, false
+setDefaultProperty 'minecraft_username', true, 'Developer'
+setDefaultProperty 'extra_jvm_args', false, ''
+setDefaultProperty 'enable_junit_testing', true, true
+setDefaultProperty 'show_testing_output', true, false
+setDefaultProperty 'enable_lwjglx', true, true
+setDefaultProperty 'publish_to_maven', true, false
+
+version = propertyString('mod_version')
+group = propertyString('root_package')
+
+base {
+    archivesName = propertyString('mod_id')
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    if (propertyBool('generate_sources_jar')) {
+        withSourcesJar()
+    }
+    if (propertyBool('generate_javadocs_jar')) {
+        withJavadocJar()
+    }
+}
+
+configurations {
+    embed
+    implementation.extendsFrom(embed)
+}
+
+unimined.minecraft {
+    version "1.12.2"
+
+    mappings {
+        mcp("stable", "39-1.12")
+    }
+
+    cleanroom {
+        loader "0.4.4-alpha"
+        runs.auth.username = propertyString('minecraft_username')
+        runs.all {
+            def extraArgs = propertyString('extra_jvm_args').trim()
+            if (!extraArgs.isEmpty()) {
+                jvmArgs += extraArgs.split("\\s+").toList()
+            }
+        }
+    }
+
+    defaultRemapJar = false
+
+    remap(tasks.jar) {
+        mixinRemap {
+            enableBaseMixin()
+            enableMixinExtra()
+            disableRefmap()
+        }
+    }
+}
+
+repositories {
+    maven {
+        name 'CurseMaven'
+        url 'https://curse.cleanroommc.com'
+    }
+    maven {
+        name 'Modrinth'
+        url 'https://api.modrinth.com/maven'
+    }
+    mavenLocal()
+}
+
+dependencies {
+    if (propertyBool('enable_lwjglx')) {
+        compileOnly "com.cleanroommc:lwjglx:1.0.0"
+    }
+    if (propertyBool('enable_junit_testing')) {
+        testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+        testImplementation 'io.netty:netty-buffer:4.1.94.Final'
+    }
+    compileOnly "com.cleanroommc:sponge-mixin:0.20.12+mixin.0.8.7"
+    modImplementation "curse.maven:ae2-extended-life-570458:6302098"
+    embed("javax.xml.bind:jaxb-api:2.3.1") {
+        transitive = false
+    }
+}
+processResources {
+    inputs.property 'mod_id', propertyString('mod_id')
+    inputs.property 'mod_name', propertyString('mod_name')
+    inputs.property 'mod_version', propertyString('mod_version')
+    inputs.property 'mod_description', propertyString('mod_description')
+    inputs.property 'mod_authors', "${propertyStringList('mod_authors', ',').join(', ')}"
+    inputs.property 'mod_credits', propertyString('mod_credits')
+    inputs.property 'mod_url', propertyString('mod_url')
+    inputs.property 'mod_update_json', propertyString('mod_update_json')
+    inputs.property 'mod_logo_path', propertyString('mod_logo_path')
+
+    filesMatching(['mcmod.info', 'pack.mcmeta']) {
+        expand(
+                'mod_id': propertyString('mod_id'),
+                'mod_name': propertyString('mod_name'),
+                'mod_version': propertyString('mod_version'),
+                'mod_description': propertyString('mod_description'),
+                'mod_authors': "${propertyStringList('mod_authors', ',').join(', ')}",
+                'mod_credits': propertyString('mod_credits'),
+                'mod_url': propertyString('mod_url'),
+                'mod_update_json': propertyString('mod_update_json'),
+                'mod_logo_path': propertyString('mod_logo_path')
+        )
+    }
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from(provider {
+        configurations.embed.collect { it.isDirectory() ? it : zipTree(it) }
+    }) {
+        exclude 'META-INF/*.SF'
+        exclude 'META-INF/*.DSA'
+        exclude 'META-INF/*.RSA'
+        exclude 'META-INF/versions/**'
+    }
+    finalizedBy(tasks.named("remapJar"))
+}
+
+test {
+    useJUnitPlatform()
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    })
+    if (propertyBool('show_testing_output')) {
+        testLogging {
+            showStandardStreams = true
+        }
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release.set(targetJavaVersion)
+}
+
+apply from: 'gradle/scripts/publishing.gradle'

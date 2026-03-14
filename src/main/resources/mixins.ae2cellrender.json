@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "compatibilityLevel": "JAVA_8",
+  "package": "com.zzhalex233.ae2cellrender.mixin",
+  "mixins": [
+    "ae2.TileDriveMixin"
+  ],
+  "client": [],
+  "server": []
+}
