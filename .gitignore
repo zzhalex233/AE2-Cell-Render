@@ -2,6 +2,7 @@
 **/build/
 !src/**/build/
 docs/
+META-INF/
 run/
 out/
 
