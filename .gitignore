@@ -2,6 +2,8 @@
 **/build/
 !src/**/build/
 docs/
+docs/compat
+docs/superpowers
 META-INF/
 run/
 out/
