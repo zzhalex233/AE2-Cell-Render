@@ -45,6 +45,9 @@ java {
 configurations {
     embed
     implementation.extendsFrom(embed)
+    compatibilityTestMods
+    testImplementation.extendsFrom(modImplementation)
+    testRuntimeOnly.extendsFrom(modImplementation)
 }
 
 unimined.minecraft {
@@ -102,6 +105,9 @@ dependencies {
     embed("javax.xml.bind:jaxb-api:2.3.1") {
         transitive = false
     }
+    compatibilityTestMods "curse.maven:crazyae-1111042:6840104"
+    compatibilityTestMods "curse.maven:ae-additions-extra-cells-2-fork-493962:3814371"
+    compatibilityTestMods "curse.maven:forgelin-continuous-456403:7700023"
 }
 processResources {
     inputs.property 'mod_id', propertyString('mod_id')
@@ -131,6 +137,13 @@ processResources {
 
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes(
+                'FMLCorePlugin': 'com.zzhalex233.ae2cellrender.mixin.AE2CellRenderMixinsCore',
+                'FMLCorePluginContainsFMLMod': true,
+                'ForceLoadAsMod': true
+        )
+    }
     from(provider {
         configurations.embed.collect { it.isDirectory() ? it : zipTree(it) }
     }) {
@@ -140,6 +153,26 @@ jar {
         exclude 'META-INF/versions/**'
     }
     finalizedBy(tasks.named("remapJar"))
+}
+
+def compatibilityTestDropDir = file('local-test-mods/1.12.2')
+
+def syncCompatibilityMods = tasks.register('syncCompatibilityMods', Copy) {
+    description = 'Stages compatibility test mods under run/client/mods/1.12.2 before the client runs.'
+    from(configurations.compatibilityTestMods)
+    includeEmptyDirs = false
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    into file('run/client/mods/1.12.2')
+    if (compatibilityTestDropDir.exists()) {
+        from(compatibilityTestDropDir) {
+            include '*.jar'
+        }
+    }
+}
+
+tasks.named('runClient') {
+    dependsOn(syncCompatibilityMods)
+    jvmArgs += '-Dfml.coreMods.load=com.zzhalex233.ae2cellrender.mixin.AE2CellRenderMixinsCore'
 }
 
 test {

@@ -27,7 +27,7 @@ class DriveOverlayTextureTest {
                 for (int x = 0; x < 6; x++) {
                     int argb = image.getRGB(x, y);
                     int alpha = (argb >>> 24) & 0xFF;
-                    if (x == 4 && y == 1) {
+                    if (x == 1 && y == 1) {
                         assertEquals(0, alpha);
                         continue;
                     }

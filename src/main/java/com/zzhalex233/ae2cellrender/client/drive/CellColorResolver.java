@@ -13,16 +13,16 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class CellColorResolver implements IResourceManagerReloadListener {
 
     public static final int NO_COLOR = -1;
     public static final CellColorResolver INSTANCE = new CellColorResolver();
 
-    private final Map<String, Integer> colorCache = new HashMap<>();
+    private final Map<String, Integer> colorCache = new ConcurrentHashMap<>();
 
     private CellColorResolver() {
     }
@@ -38,9 +38,23 @@ public final class CellColorResolver implements IResourceManagerReloadListener {
             return cached;
         }
 
+        if (!Minecraft.getMinecraft().isCallingFromMinecraftThread()) {
+            return NO_COLOR;
+        }
+
         int resolved = resolve(decode(serializedStack));
         colorCache.put(key, resolved);
         return resolved;
+    }
+
+    public void prime(Iterable<byte[]> serializedStacks) {
+        if (!Minecraft.getMinecraft().isCallingFromMinecraftThread()) {
+            throw new IllegalStateException("Color priming must happen on the client thread");
+        }
+
+        for (byte[] serializedStack : serializedStacks) {
+            resolve(serializedStack);
+        }
     }
 
     public void clear() {
@@ -50,6 +64,13 @@ public final class CellColorResolver implements IResourceManagerReloadListener {
     @Override
     public void onResourceManagerReload(IResourceManager resourceManager) {
         clear();
+        primeCachedSnapshots();
+    }
+
+    private void primeCachedSnapshots() {
+        for (com.zzhalex233.ae2cellrender.drive.DriveRenderSnapshot snapshot : DriveRenderCache.getInstance().getSnapshots()) {
+            prime(snapshot.getSlots());
+        }
     }
 
     private int resolve(ItemStack stack) {

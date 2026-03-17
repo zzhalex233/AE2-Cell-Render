@@ -1,8 +1,8 @@
 package com.zzhalex233.ae2cellrender.network.message;
 
-import appeng.tile.storage.TileDrive;
-import com.zzhalex233.ae2cellrender.client.drive.DriveCellFastRenderer;
+import com.zzhalex233.ae2cellrender.client.drive.CellColorResolver;
 import com.zzhalex233.ae2cellrender.client.drive.DriveRenderCache;
+import com.zzhalex233.ae2cellrender.client.drive.compat.DriveSyncMessageSupport;
 import com.zzhalex233.ae2cellrender.drive.DriveRenderSnapshot;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
@@ -20,24 +20,32 @@ import java.io.IOException;
 
 public class SyncDriveRenderDataMessage implements IMessage {
 
-    private DriveRenderSnapshot snapshot = DriveRenderSnapshot.empty(0, 0L);
+    private int digest;
+    private DriveRenderSnapshot snapshot = DriveRenderSnapshot.empty(0, 0L, 10);
 
     public SyncDriveRenderDataMessage() {
     }
 
-    public SyncDriveRenderDataMessage(DriveRenderSnapshot snapshot) {
+    public SyncDriveRenderDataMessage(DriveRenderSnapshot snapshot, int digest) {
         this.snapshot = snapshot;
+        this.digest = digest;
     }
 
     public DriveRenderSnapshot getSnapshot() {
         return snapshot;
     }
 
+    public int getDigest() {
+        return digest;
+    }
+
     public void writeTo(DataOutputStream output) throws IOException {
+        output.writeInt(digest);
         snapshot.writeTo(output);
     }
 
     public void readFrom(DataInputStream input) throws IOException {
+        digest = input.readInt();
         snapshot = DriveRenderSnapshot.readFrom(input);
     }
 
@@ -74,12 +82,15 @@ public class SyncDriveRenderDataMessage implements IMessage {
                     return;
                 }
 
-                TileEntity tile = minecraft.world.getTileEntity(BlockPos.fromLong(snapshot.getPositionKey()));
-                if (!(tile instanceof TileDrive)) {
+                BlockPos pos = BlockPos.fromLong(snapshot.getPositionKey());
+                TileEntity tile = minecraft.world.getTileEntity(pos);
+                if (!DriveSyncMessageSupport.accepts(minecraft.world.getBlockState(pos).getBlock(), tile)) {
                     return;
                 }
 
-                DriveRenderCache.getInstance().store(snapshot, DriveCellFastRenderer.buildStateDigest((TileDrive) tile));
+                CellColorResolver.INSTANCE.prime(snapshot.getSlots());
+                DriveRenderCache.getInstance().store(snapshot, message.getDigest());
+                minecraft.world.markBlockRangeForRenderUpdate(pos, pos);
             });
             return null;
         }

@@ -7,61 +7,103 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CellSpriteColorAnalyzerTest {
 
     @Test
-    void choosesBodyColorOverSmallOffHueIndicatorRegion() {
+    void bodyBeatsBlackOutlineAndTinyBrightAccent() {
         GeneratedCellSpriteFixtures.SpritePixels sprite = GeneratedCellSpriteFixtures.bodyWithIndicatorAndOutline();
 
-        int resolved = CellSpriteColorAnalyzer.mainBodyColor(sprite.pixels, sprite.width, sprite.height, GeneratedCellSpriteFixtures.opaque(0xFF, 0xFF, 0xFF));
-
-        assertTrue(
-                CellColorMath.colorDistance(resolved, sprite.bodyColor)
-                        < CellColorMath.colorDistance(resolved, sprite.indicatorColor)
+        int resolved = CellSpriteMainColorExtractor.mainColor(
+                sprite.pixels,
+                sprite.width,
+                sprite.height,
+                GeneratedCellSpriteFixtures.opaque(0xFF, 0xFF, 0xFF)
         );
+
+        assertCloserToBody(resolved, sprite);
     }
 
     @Test
-    void ignoresThinInternalOutlineWithoutKillingDarkBodyRegions() {
+    void bodyBeatsDarkContourLines() {
         GeneratedCellSpriteFixtures.SpritePixels sprite = GeneratedCellSpriteFixtures.darkBodyWithInternalOutline();
 
-        int resolved = CellSpriteColorAnalyzer.mainBodyColor(sprite.pixels, sprite.width, sprite.height, GeneratedCellSpriteFixtures.opaque(0xFF, 0xFF, 0xFF));
-
-        assertTrue(
-                CellColorMath.colorDistance(resolved, sprite.bodyColor)
-                        < CellColorMath.colorDistance(resolved, sprite.indicatorColor)
+        int resolved = CellSpriteMainColorExtractor.mainColor(
+                sprite.pixels,
+                sprite.width,
+                sprite.height,
+                GeneratedCellSpriteFixtures.opaque(0xFF, 0xFF, 0xFF)
         );
+
+        assertCloserToBody(resolved, sprite);
     }
 
     @Test
-    void prefersLitBodyToneOverSameHueShadowBand() {
+    void bodyBeatsWhiteHighlightSpecks() {
+        GeneratedCellSpriteFixtures.SpritePixels sprite = GeneratedCellSpriteFixtures.bodyWithWhiteHighlightSpecks();
+
+        int resolved = CellSpriteMainColorExtractor.mainColor(
+                sprite.pixels,
+                sprite.width,
+                sprite.height,
+                GeneratedCellSpriteFixtures.opaque(0xFF, 0xFF, 0xFF)
+        );
+
+        assertCloserToBody(resolved, sprite);
+    }
+
+    @Test
+    void bodyNearBorderStillWinsAfterRingDownweighting() {
+        GeneratedCellSpriteFixtures.SpritePixels sprite = GeneratedCellSpriteFixtures.bodyNearBorderWithTinyAccent();
+
+        int resolved = CellSpriteMainColorExtractor.mainColor(
+                sprite.pixels,
+                sprite.width,
+                sprite.height,
+                GeneratedCellSpriteFixtures.opaque(0xFF, 0xFF, 0xFF)
+        );
+
+        assertCloserToBody(resolved, sprite);
+    }
+
+    @Test
+    void grayBodyBeatsDarkStructureFamilies() {
+        GeneratedCellSpriteFixtures.SpritePixels sprite = GeneratedCellSpriteFixtures.grayBodyWithDarkStructureAndPurpleAccent();
+
+        int resolved = CellSpriteMainColorExtractor.mainColor(
+                sprite.pixels,
+                sprite.width,
+                sprite.height,
+                GeneratedCellSpriteFixtures.opaque(0xFF, 0xFF, 0xFF)
+        );
+
+        assertTrue(
+                CellColorMath.colorDistance(resolved, sprite.bodyColor)
+                        < CellColorMath.colorDistance(resolved, sprite.outlineColor),
+                "resolved=#" + Integer.toHexString(resolved)
+                        + " body=#" + Integer.toHexString(sprite.bodyColor)
+                        + " outline=#" + Integer.toHexString(sprite.outlineColor)
+        );
+        assertCloserToBody(resolved, sprite);
+    }
+
+    @Test
+    void litBodyToneBeatsSameHueShadowBand() {
         GeneratedCellSpriteFixtures.SpritePixels sprite = GeneratedCellSpriteFixtures.bodyWithShadowedLowerHalf();
 
-        int resolved = CellSpriteColorAnalyzer.mainBodyColor(sprite.pixels, sprite.width, sprite.height, GeneratedCellSpriteFixtures.opaque(0xFF, 0xFF, 0xFF));
-        int flatAverage = CellColorMath.averageOpaqueColor(sprite.pixels, GeneratedCellSpriteFixtures.opaque(0xFF, 0xFF, 0xFF));
+        int resolved = CellSpriteMainColorExtractor.mainColor(
+                sprite.pixels,
+                sprite.width,
+                sprite.height,
+                GeneratedCellSpriteFixtures.opaque(0xFF, 0xFF, 0xFF)
+        );
 
-        assertTrue(
-                CellColorMath.colorDistance(resolved, sprite.bodyColor)
-                        < CellColorMath.colorDistance(resolved, sprite.indicatorColor)
-        );
-        assertTrue(
-                CellColorMath.colorDistance(resolved, sprite.bodyColor)
-                        < CellColorMath.colorDistance(flatAverage, sprite.bodyColor)
-        );
+        assertCloserToBody(resolved, sprite);
     }
 
-    @Test
-    void prefersSmallBrightFaceOverLargeSameHueShadowBand() {
-        GeneratedCellSpriteFixtures.SpritePixels sprite = GeneratedCellSpriteFixtures.bodyWithSmallBrightFaceAndLargeShadowBand();
-
-        int resolved = CellSpriteColorAnalyzer.mainBodyColor(sprite.pixels, sprite.width, sprite.height, GeneratedCellSpriteFixtures.opaque(0xFF, 0xFF, 0xFF));
-        float bodyValue = CellColorMath.hsv(sprite.bodyColor).value();
-        float shadowValue = CellColorMath.hsv(sprite.indicatorColor).value();
-        float resolvedValue = CellColorMath.hsv(resolved).value();
-
+    private static void assertCloserToBody(int resolved, GeneratedCellSpriteFixtures.SpritePixels sprite) {
         assertTrue(
                 CellColorMath.colorDistance(resolved, sprite.bodyColor)
-                        < CellColorMath.colorDistance(resolved, sprite.indicatorColor)
-        );
-        assertTrue(
-                resolvedValue > shadowValue + ((bodyValue - shadowValue) * 0.60F)
+                        < CellColorMath.colorDistance(resolved, sprite.accentColor),
+                "resolved=#" + Integer.toHexString(resolved)
+                        + " body=#" + Integer.toHexString(sprite.bodyColor)
+                        + " accent=#" + Integer.toHexString(sprite.accentColor)
         );
     }
 }

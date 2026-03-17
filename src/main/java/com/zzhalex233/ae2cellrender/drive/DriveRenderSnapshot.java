@@ -9,24 +9,25 @@ import java.util.List;
 
 public final class DriveRenderSnapshot {
 
-    public static final int SLOT_COUNT = 10;
-
     private final int dimensionId;
     private final long positionKey;
     private final List<byte[]> slots;
 
     public DriveRenderSnapshot(int dimensionId, long positionKey, List<byte[]> slots) {
-        if (slots.size() != SLOT_COUNT) {
-            throw new IllegalArgumentException("Expected " + SLOT_COUNT + " slots, got " + slots.size());
+        if (slots.isEmpty()) {
+            throw new IllegalArgumentException("Expected at least one slot");
         }
         this.dimensionId = dimensionId;
         this.positionKey = positionKey;
         this.slots = copySlots(slots);
     }
 
-    public static DriveRenderSnapshot empty(int dimensionId, long positionKey) {
-        List<byte[]> slots = new ArrayList<>(SLOT_COUNT);
-        for (int i = 0; i < SLOT_COUNT; i++) {
+    public static DriveRenderSnapshot empty(int dimensionId, long positionKey, int slotCount) {
+        if (slotCount <= 0) {
+            throw new IllegalArgumentException("Expected positive slot count");
+        }
+        List<byte[]> slots = new ArrayList<>(slotCount);
+        for (int i = 0; i < slotCount; i++) {
             slots.add(new byte[0]);
         }
         return new DriveRenderSnapshot(dimensionId, positionKey, slots);

@@ -81,6 +81,64 @@ final class GeneratedCellSpriteFixtures {
         return new SpritePixels(width, height, pixels, body, shadow);
     }
 
+    static SpritePixels bodyWithWhiteHighlightSpecks() {
+        int width = 16;
+        int height = 16;
+        int[] pixels = new int[width * height];
+
+        int body = hsv(28.0F, 0.70F, 0.82F);
+        int outline = transform(body, hsvDelta(0.0F, -0.30F, -0.50F));
+        int highlight = opaque(0xF8, 0xF8, 0xF2);
+
+        fill(pixels, transparent());
+        paintRect(pixels, width, 2, 2, 13, 13, body);
+        paintBorder(pixels, width, 2, 2, 13, 13, outline);
+        paintRect(pixels, width, 5, 4, 5, 4, highlight);
+        paintRect(pixels, width, 10, 6, 10, 6, highlight);
+
+        return new SpritePixels(width, height, pixels, body, highlight);
+    }
+
+    static SpritePixels bodyNearBorderWithTinyAccent() {
+        int width = 16;
+        int height = 16;
+        int[] pixels = new int[width * height];
+
+        int body = hsv(210.0F, 0.48F, 0.88F);
+        int bodyShade = transform(body, hsvDelta(0.0F, -0.04F, -0.08F));
+        int accent = hsv(150.0F, 0.82F, 0.84F);
+
+        fill(pixels, transparent());
+        paintRect(pixels, width, 1, 1, 14, 12, bodyShade);
+        paintRect(pixels, width, 2, 2, 13, 11, body);
+        paintRect(pixels, width, 12, 10, 12, 10, accent);
+
+        return new SpritePixels(width, height, pixels, body, accent);
+    }
+
+    static SpritePixels grayBodyWithDarkStructureAndPurpleAccent() {
+        int width = 16;
+        int height = 16;
+        int[] pixels = new int[width * height];
+
+        int body = opaque(0x9C, 0x9C, 0xA2);
+        int bodyShade = opaque(0x88, 0x89, 0x90);
+        int darkStructure = opaque(0x36, 0x20, 0x14);
+        int accent = opaque(0x8B, 0x54, 0xC2);
+
+        fill(pixels, transparent());
+        paintRect(pixels, width, 2, 2, 13, 13, bodyShade);
+        paintRect(pixels, width, 3, 3, 12, 12, body);
+        paintBorder(pixels, width, 2, 2, 13, 13, darkStructure);
+        paintLine(pixels, width, 5, 3, 5, 12, darkStructure);
+        paintLine(pixels, width, 10, 3, 10, 12, darkStructure);
+        paintLine(pixels, width, 3, 5, 12, 5, darkStructure);
+        paintLine(pixels, width, 3, 10, 12, 10, darkStructure);
+        paintRect(pixels, width, 7, 7, 8, 8, accent);
+
+        return new SpritePixels(width, height, pixels, body, accent, darkStructure);
+    }
+
     static int argb(int alpha, int red, int green, int blue) {
         return ((alpha & 0xFF) << 24)
                 | ((red & 0xFF) << 16)
@@ -169,14 +227,20 @@ final class GeneratedCellSpriteFixtures {
         final int height;
         final int[] pixels;
         final int bodyColor;
-        final int indicatorColor;
+        final int accentColor;
+        final int outlineColor;
 
-        private SpritePixels(int width, int height, int[] pixels, int bodyColor, int indicatorColor) {
+        private SpritePixels(int width, int height, int[] pixels, int bodyColor, int accentColor) {
+            this(width, height, pixels, bodyColor, accentColor, accentColor);
+        }
+
+        private SpritePixels(int width, int height, int[] pixels, int bodyColor, int accentColor, int outlineColor) {
             this.width = width;
             this.height = height;
             this.pixels = pixels;
             this.bodyColor = bodyColor;
-            this.indicatorColor = indicatorColor;
+            this.accentColor = accentColor;
+            this.outlineColor = outlineColor;
         }
     }
 }

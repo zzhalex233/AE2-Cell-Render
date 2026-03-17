@@ -28,5 +28,7 @@
 ---
 
 ## 画廊
-![](gallery/1.png)
-![](gallery/2.png)
+![](gallery/villaincell.png)
+![](gallery/villaincell1.png)
+![](gallery/modcell.png)
+![](gallery/modcell1.png)

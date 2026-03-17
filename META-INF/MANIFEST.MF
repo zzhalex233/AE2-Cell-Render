@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+FMLCorePlugin: dev.beecube31.crazyae2.mixins.CrazyAEMixinsCore
+FMLCorePluginContainsFMLMod: true
+ForceLoadAsMod: true
+

@@ -1,9 +1,15 @@
 package com.zzhalex233.ae2cellrender.client.drive;
 
 import com.zzhalex233.ae2cellrender.AE2CellRender;
+import com.zzhalex233.ae2cellrender.client.drive.compat.DriveAdapter;
+import com.zzhalex233.ae2cellrender.client.drive.compat.DriveAdapterRegistry;
+import com.zzhalex233.ae2cellrender.client.drive.model.DriveModelBakeRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraftforge.client.event.ModelBakeEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.ChunkEvent;
@@ -22,6 +28,9 @@ public final class DriveClientEventHandler {
 
     public void register() {
         MinecraftForge.EVENT_BUS.register(this);
+        for (DriveAdapter adapter : DriveAdapterRegistry.getRegisteredAdapters()) {
+            DriveModelBakeRegistry.register(new ModelResourceLocation(adapter.modelLocation(), "normal"));
+        }
     }
 
     public static TextureAtlasSprite getOverlaySprite() {
@@ -31,6 +40,16 @@ public final class DriveClientEventHandler {
     @SubscribeEvent
     public void onTextureStitchPre(TextureStitchEvent.Pre event) {
         event.getMap().registerSprite(OVERLAY_SPRITE);
+    }
+
+    @SubscribeEvent
+    public void onModelBake(ModelBakeEvent event) {
+        for (ModelResourceLocation target : DriveModelBakeRegistry.getTargets()) {
+            IBakedModel model = event.getModelRegistry().getObject(target);
+            if (model != null) {
+                event.getModelRegistry().putObject(target, DriveModelBakeRegistry.wrap(target, model));
+            }
+        }
     }
 
     @SubscribeEvent

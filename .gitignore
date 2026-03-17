@@ -26,3 +26,6 @@ gradle-app.setting
 # IDEA config
 .idea
 
+# Local compatibility test drop-ins (LazyAE2 jar goes into local-test-mods/1.12.2/)
+local-test-mods/
+

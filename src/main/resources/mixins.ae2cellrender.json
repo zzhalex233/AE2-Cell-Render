@@ -4,7 +4,12 @@
   "compatibilityLevel": "JAVA_8",
   "package": "com.zzhalex233.ae2cellrender.mixin",
   "mixins": [
-    "ae2.TileDriveMixin"
+    "ae2.BlockDriveMixin",
+    "ae2.TileDriveMixin",
+    "crazyae.BlockDriveImprovedMixin",
+    "crazyae.TileImprovedDriveMixin",
+    "aeadditions.BlockHardMeDriveMixin",
+    "aeadditions.TileEntityHardMeDriveMixin"
   ],
   "client": [],
   "server": []

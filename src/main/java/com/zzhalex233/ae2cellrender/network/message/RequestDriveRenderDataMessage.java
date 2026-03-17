@@ -1,6 +1,5 @@
 package com.zzhalex233.ae2cellrender.network.message;
 
-import appeng.tile.storage.TileDrive;
 import com.zzhalex233.ae2cellrender.server.drive.DriveRenderHooks;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
@@ -64,8 +63,8 @@ public class RequestDriveRenderDataMessage implements IMessage {
             EntityPlayerMP player = ctx.getServerHandler().player;
             player.getServerWorld().addScheduledTask(() -> {
                 TileEntity tile = player.world.getTileEntity(BlockPos.fromLong(message.getPositionKey()));
-                if (tile instanceof TileDrive) {
-                    DriveRenderHooks.sendToPlayer((TileDrive) tile, player);
+                if (tile != null) {
+                    DriveRenderHooks.sendToPlayerIfSupported(tile, player);
                 }
             });
             return null;
