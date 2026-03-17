@@ -14,6 +14,7 @@
 ## Dependencies
 
 - Required: [AE2UEL](https://github.com/AE2-UEL/Applied-Energistics-2)
+- Required: [MixinBooter](https://github.com/CleanroomMC/MixinBooter)
 
 ## Download
 

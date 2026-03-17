@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
         modid = AE2CellRender.MOD_ID,
         name = AE2CellRender.MOD_NAME,
         version = AE2CellRender.VERSION,
-        dependencies = "required-after:appliedenergistics2"
+        dependencies = "required-after:appliedenergistics2;required-after:mixinbooter"
 )
 public final class AE2CellRender {
 

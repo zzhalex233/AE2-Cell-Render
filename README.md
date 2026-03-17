@@ -16,6 +16,7 @@
 ## 依赖
 
 - 前置：[AE2UEL](https://github.com/AE2-UEL/Applied-Energistics-2)
+- 前置：[MixinBooter](https://github.com/CleanroomMC/MixinBooter)
 
 ## 下载
 
