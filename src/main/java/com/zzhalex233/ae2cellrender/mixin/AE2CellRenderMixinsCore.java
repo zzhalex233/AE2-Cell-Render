@@ -36,7 +36,7 @@ public final class AE2CellRenderMixinsCore implements IFMLLoadingPlugin, ILateMi
 
     @Override
     public String getAccessTransformerClass() {
-        return null;
+        return "com.zzhalex233.ae2cellrender.mixin.AE2CellRenderAccessTransformer";
     }
 
     @Override

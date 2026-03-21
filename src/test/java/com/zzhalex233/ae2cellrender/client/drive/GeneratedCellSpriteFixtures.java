@@ -1,11 +1,38 @@
 package com.zzhalex233.ae2cellrender.client.drive;
 
 import java.awt.Color;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.EnumFacing;
+
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.IntUnaryOperator;
 
 final class GeneratedCellSpriteFixtures {
 
     private GeneratedCellSpriteFixtures() {
+    }
+
+    static ModelSpriteFixture fieryStorageCell1kFixture() {
+        return modelWithIndicator(
+                opaque(0x8F, 0x91, 0x96),
+                opaque(0xFF, 0xD8, 0x2C)
+        );
+    }
+
+    static ModelSpriteFixture fieryStorageCell16kFixture() {
+        return modelWithIndicator(
+                opaque(0x86, 0x8D, 0xA3),
+                opaque(0xD7, 0x37, 0x2A)
+        );
+    }
+
+    static ModelSpriteFixture soloStorageCellFixture() {
+        return modelWithIndicator(
+                opaque(0x7E, 0xA7, 0x68),
+                opaque(0xC8, 0xA1, 0x5A)
+        );
     }
 
     static SpritePixels bodyWithIndicatorAndOutline() {
@@ -139,6 +166,55 @@ final class GeneratedCellSpriteFixtures {
         return new SpritePixels(width, height, pixels, body, accent, darkStructure);
     }
 
+    static SpritePixels warmBodyWithTierIndicator(int indicatorColor) {
+        int width = 16;
+        int height = 16;
+        int[] pixels = new int[width * height];
+
+        int body = hsv(28.0F, 0.70F, 0.76F);
+        int bodyShade = transform(body, hsvDelta(2.0F, -0.04F, -0.10F));
+        int outline = transform(body, hsvDelta(-6.0F, -0.18F, -0.42F));
+
+        fill(pixels, transparent());
+        paintRect(pixels, width, 2, 2, 13, 13, bodyShade);
+        paintRect(pixels, width, 3, 3, 12, 12, body);
+        paintBorder(pixels, width, 2, 2, 13, 13, outline);
+        paintLine(pixels, width, 5, 3, 5, 12, outline);
+        paintLine(pixels, width, 10, 3, 10, 12, outline);
+        paintLine(pixels, width, 3, 5, 12, 5, outline);
+        paintLine(pixels, width, 3, 10, 12, 10, outline);
+        paintRect(pixels, width, 11, 10, 12, 11, indicatorColor);
+
+        return new SpritePixels(width, height, pixels, body, indicatorColor, outline);
+    }
+
+    static SpritePixels warmBodyWithYellowTierIndicator() {
+        return warmBodyWithTierIndicator(hsv(42.0F, 0.88F, 0.92F));
+    }
+
+    static SpritePixels warmBodyWithRedTierIndicator() {
+        return warmBodyWithTierIndicator(hsv(10.0F, 0.80F, 0.70F));
+    }
+
+    static ModelSpriteFixture modelWithIndicator(int bodyColor, int indicatorColor) {
+        TextureAtlasSprite bodySprite = TextureAtlasSprite.solid("body", 16, 16, bodyColor);
+        int[] indicatorPixels = new int[16 * 16];
+        fill(indicatorPixels, transparent());
+        paintRect(indicatorPixels, 16, 11, 10, 12, 11, indicatorColor);
+        TextureAtlasSprite indicatorSprite = TextureAtlasSprite.fromPixels("indicator", 16, 16, indicatorPixels);
+
+        return new ModelSpriteFixture(
+                bodyColor,
+                indicatorColor,
+                bodySprite,
+                indicatorSprite,
+                Arrays.asList(
+                        new BakedQuad(new int[0], -1, EnumFacing.NORTH, indicatorSprite),
+                        new BakedQuad(new int[0], -1, EnumFacing.NORTH, bodySprite)
+                )
+        );
+    }
+
     static int argb(int alpha, int red, int green, int blue) {
         return ((alpha & 0xFF) << 24)
                 | ((red & 0xFF) << 16)
@@ -241,6 +317,22 @@ final class GeneratedCellSpriteFixtures {
             this.bodyColor = bodyColor;
             this.accentColor = accentColor;
             this.outlineColor = outlineColor;
+        }
+    }
+
+    static final class ModelSpriteFixture {
+        final int bodyColor;
+        final int indicatorColor;
+        final TextureAtlasSprite bodySprite;
+        final TextureAtlasSprite indicatorSprite;
+        final List<BakedQuad> quads;
+
+        private ModelSpriteFixture(int bodyColor, int indicatorColor, TextureAtlasSprite bodySprite, TextureAtlasSprite indicatorSprite, List<BakedQuad> quads) {
+            this.bodyColor = bodyColor;
+            this.indicatorColor = indicatorColor;
+            this.bodySprite = bodySprite;
+            this.indicatorSprite = indicatorSprite;
+            this.quads = quads;
         }
     }
 }

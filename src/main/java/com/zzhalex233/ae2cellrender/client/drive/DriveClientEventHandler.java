@@ -4,11 +4,15 @@ import com.zzhalex233.ae2cellrender.AE2CellRender;
 import com.zzhalex233.ae2cellrender.client.drive.compat.DriveAdapter;
 import com.zzhalex233.ae2cellrender.client.drive.compat.DriveAdapterRegistry;
 import com.zzhalex233.ae2cellrender.client.drive.model.DriveModelBakeRegistry;
+import com.zzhalex233.ae2cellrender.drive.DriveRenderSnapshot;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.client.resources.IResourceManagerReloadListener;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.client.event.ModelBakeEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -16,7 +20,7 @@ import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
-public final class DriveClientEventHandler {
+public final class DriveClientEventHandler implements IResourceManagerReloadListener {
 
     private static final ResourceLocation OVERLAY_SPRITE = new ResourceLocation(AE2CellRender.MOD_ID, "blocks/drive_overlay_white");
 
@@ -52,6 +56,12 @@ public final class DriveClientEventHandler {
         }
     }
 
+    @Override
+    public void onResourceManagerReload(IResourceManager resourceManager) {
+        CellColorResolver.INSTANCE.clear();
+        markCachedDrivesForRenderUpdate();
+    }
+
     @SubscribeEvent
     public void onClientWorldUnload(WorldEvent.Unload event) {
         if (!event.getWorld().isRemote) {
@@ -69,5 +79,21 @@ public final class DriveClientEventHandler {
         }
 
         cache.clear();
+    }
+
+    private void markCachedDrivesForRenderUpdate() {
+        Minecraft minecraft = Minecraft.getMinecraft();
+        if (minecraft.world == null) {
+            return;
+        }
+
+        int currentDimension = minecraft.world.provider.getDimension();
+        for (DriveRenderSnapshot snapshot : cache.getSnapshots()) {
+            if (snapshot.getDimensionId() != currentDimension) {
+                continue;
+            }
+            BlockPos pos = BlockPos.fromLong(snapshot.getPositionKey());
+            minecraft.world.markBlockRangeForRenderUpdate(pos, pos);
+        }
     }
 }

@@ -108,6 +108,9 @@ dependencies {
     compatibilityTestMods "curse.maven:crazyae-1111042:6840104"
     compatibilityTestMods "curse.maven:ae-additions-extra-cells-2-fork-493962:3814371"
     compatibilityTestMods "curse.maven:forgelin-continuous-456403:7700023"
+    compatibilityTestMods "curse.maven:mekanism-ce-unofficial-840735:7680340"
+    compatibilityTestMods "curse.maven:mekanism-energistics-1027681:5775101"
+    compatibilityTestMods "curse.maven:ex-pattern-provider-892005:4773929"
 }
 processResources {
     inputs.property 'mod_id', propertyString('mod_id')

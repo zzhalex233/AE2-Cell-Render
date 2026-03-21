@@ -29,7 +29,7 @@ public final class DriveDelegatingBakedModel implements IBakedModel {
     private static final DriveCellBodyModelBuilder BODY_MODEL_BUILDER = new DriveCellBodyModelBuilder();
     private static final float TOP_MULTIPLIER = 1.05F;
     private static final float SIDE_MULTIPLIER = 0.93F;
-    private static final float BOTTOM_MULTIPLIER = 0.86F;
+    private static final float BOTTOM_MULTIPLIER = 0.92F;
 
     private final IBakedModel delegate;
 

@@ -1,5 +1,6 @@
 package net.minecraft.client.renderer.block.model;
 
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 
@@ -20,4 +21,8 @@ public interface IBakedModel {
     ItemCameraTransforms getItemCameraTransforms();
 
     ItemOverrideList getOverrides();
+
+    default boolean isAmbientOcclusion(IBlockState state) {
+        return isAmbientOcclusion();
+    }
 }

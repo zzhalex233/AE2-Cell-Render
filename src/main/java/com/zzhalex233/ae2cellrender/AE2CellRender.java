@@ -1,5 +1,6 @@
 package com.zzhalex233.ae2cellrender;
 
+import com.zzhalex233.ae2cellrender.config.AE2CellRenderConfig;
 import com.zzhalex233.ae2cellrender.proxy.CommonProxy;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
@@ -17,7 +18,7 @@ public final class AE2CellRender {
 
     public static final String MOD_ID = "ae2cellrender";
     public static final String MOD_NAME = "AE2 Cell Render";
-    public static final String VERSION = "2.0";
+    public static final String VERSION = "2.2";
     public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
 
     @SidedProxy(
@@ -28,6 +29,7 @@ public final class AE2CellRender {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
+        AE2CellRenderConfig.load(event.getSuggestedConfigurationFile());
         proxy.preInit();
     }
 }

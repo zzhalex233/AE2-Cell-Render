@@ -8,15 +8,19 @@ final class CellSpriteMainColorExtractor {
     }
 
     static int mainColor(int[] pixels, int width, int height, int fallback) {
+        return mainColorCandidate(pixels, width, height, fallback).argb();
+    }
+
+    static CellSpriteColorCandidate mainColorCandidate(int[] pixels, int width, int height, int fallback) {
         List<CellSpriteWeightedSamples.WeightedSample> samples = CellSpriteWeightedSamples.build(pixels, width, height);
         if (samples.isEmpty()) {
-            return fallback;
+            return fallbackCandidate(fallback);
         }
         CellColorMath.LabColor globalLab = weightedAverageLab(samples);
 
         List<LabClusterReducer.Cluster> clusters = LabClusterReducer.reduce(samples);
         if (clusters.isEmpty()) {
-            return weightedAverage(samples, fallback);
+            return weightedAverageCandidate(samples, fallback);
         }
 
         LabClusterReducer.Cluster familyAnchor = clusters.get(0);
@@ -42,7 +46,16 @@ final class CellSpriteMainColorExtractor {
                 bestRepresentativeScore = candidateScore;
             }
         }
-        return representative.argb();
+        return new CellSpriteColorCandidate(
+                representative.argb(),
+                samples.size(),
+                representative.totalWeight(),
+                familyWeight(familyAnchor, clusters),
+                innerWeightRatio(representative),
+                clusters.size(),
+                representative.averageSaturation(),
+                representative.lab().lightness()
+        );
     }
 
     private static float familyScore(LabClusterReducer.Cluster anchor, List<LabClusterReducer.Cluster> clusters, CellColorMath.LabColor globalLab) {
@@ -53,6 +66,16 @@ final class CellSpriteMainColorExtractor {
             }
         }
         return score;
+    }
+
+    private static float familyWeight(LabClusterReducer.Cluster anchor, List<LabClusterReducer.Cluster> clusters) {
+        float totalWeight = 0.0F;
+        for (LabClusterReducer.Cluster cluster : clusters) {
+            if (sameFamily(anchor, cluster)) {
+                totalWeight += cluster.totalWeight();
+            }
+        }
+        return totalWeight;
     }
 
     private static float representativeScore(LabClusterReducer.Cluster cluster) {
@@ -121,5 +144,23 @@ final class CellSpriteMainColorExtractor {
     private static float globalCloseness(LabClusterReducer.Cluster cluster, CellColorMath.LabColor globalLab) {
         float delta = CellColorMath.deltaE(cluster.lab(), globalLab);
         return Math.max(0.15F, 1.0F - (delta / 40.0F));
+    }
+
+    private static CellSpriteColorCandidate fallbackCandidate(int fallback) {
+        CellColorMath.HsvColor hsv = CellColorMath.hsv(fallback);
+        return new CellSpriteColorCandidate(fallback, 0, 0.0F, 0.0F, 0.0F, 0, hsv.saturation(), CellColorMath.lab(fallback).lightness());
+    }
+
+    private static CellSpriteColorCandidate weightedAverageCandidate(List<CellSpriteWeightedSamples.WeightedSample> samples, int fallback) {
+        int argb = weightedAverage(samples, fallback);
+        CellColorMath.HsvColor hsv = CellColorMath.hsv(argb);
+        return new CellSpriteColorCandidate(argb, samples.size(), 0.0F, 0.0F, 0.0F, 0, hsv.saturation(), CellColorMath.lab(argb).lightness());
+    }
+
+    private static float innerWeightRatio(LabClusterReducer.Cluster cluster) {
+        if (cluster.totalWeight() <= 0.0F) {
+            return 0.0F;
+        }
+        return cluster.innerWeight() / cluster.totalWeight();
     }
 }
