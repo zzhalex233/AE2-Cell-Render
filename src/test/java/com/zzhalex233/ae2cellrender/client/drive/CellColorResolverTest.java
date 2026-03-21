@@ -238,13 +238,41 @@ class CellColorResolverTest {
     }
 
     @Test
+    void configCanDisableMetadataFamilySplitting() {
+        GeneratedCellSpriteFixtures.ModelSpriteFixture canonicalFixture = GeneratedCellSpriteFixtures.modelWithIndicator(
+                GeneratedCellSpriteFixtures.opaque(0xC8, 0xA1, 0x5A),
+                GeneratedCellSpriteFixtures.opaque(0xFF, 0xD8, 0x2C)
+        );
+        GeneratedCellSpriteFixtures.ModelSpriteFixture tierFixture = GeneratedCellSpriteFixtures.modelWithIndicator(
+                GeneratedCellSpriteFixtures.opaque(0xD2, 0xA9, 0x62),
+                GeneratedCellSpriteFixtures.opaque(0xD7, 0x37, 0x2A)
+        );
+
+        MetadataTieredCellItem tieredItem = new MetadataTieredCellItem("storage.gas", 0, 3);
+        ForgeRegistries.ITEMS.register(tieredItem);
+        Minecraft.getMinecraft().getRenderItem().setModelResolver(tieredItem, stack -> {
+            GeneratedCellSpriteFixtures.ModelSpriteFixture fixture = stack.getMetadata() == 0 ? canonicalFixture : tierFixture;
+            return new FixtureBakedModel(fixture.quads, fixture.bodySprite);
+        });
+
+        AE2CellRenderConfig.overrideEnableSeriesColorFamiliesForTests(false);
+        CellColorResolver.INSTANCE.clear();
+
+        int canonicalResolved = resolveSerialized(new ItemStack(tieredItem, 1, 0));
+        int tierResolved = resolveSerialized(new ItemStack(tieredItem, 1, 3));
+
+        assertEquals(CellColorMath.postProcessMainColor(canonicalFixture.bodyColor), canonicalResolved);
+        assertEquals(canonicalResolved, tierResolved);
+    }
+
+    @Test
     void registryFamiliesKeepSameHueBlueGasCellsInOneSeries() {
         GeneratedCellSpriteFixtures.ModelSpriteFixture oneKFixture = GeneratedCellSpriteFixtures.modelWithIndicator(
                 GeneratedCellSpriteFixtures.opaque(0xA8, 0xC6, 0xE9),
                 GeneratedCellSpriteFixtures.opaque(0xF4, 0x92, 0xC0)
         );
         GeneratedCellSpriteFixtures.ModelSpriteFixture sixtyFourKFixture = GeneratedCellSpriteFixtures.modelWithIndicator(
-                GeneratedCellSpriteFixtures.opaque(0x5F, 0x87, 0xC8),
+                GeneratedCellSpriteFixtures.opaque(0x4C, 0xB0, 0xD8),
                 GeneratedCellSpriteFixtures.opaque(0xF4, 0x92, 0xC0)
         );
 
@@ -256,6 +284,20 @@ class CellColorResolverTest {
 
         assertEquals(CellColorMath.postProcessMainColor(oneKFixture.bodyColor), oneKResolved);
         assertEquals(oneKResolved, sixtyFourKResolved);
+    }
+
+    @Test
+    void loweringHueThresholdSplitsNearbyBlueAndCyanFamilies() {
+        Item oneK = registerSeriesItem("mekeng", "gas_cell_1k", 0xFFA8C6E9);
+        Item sixtyFourK = registerSeriesItem("mekeng", "gas_cell_64k", 0xFF4CB0D8);
+
+        AE2CellRenderConfig.overrideFamilyHueThresholdForTests(5.0F);
+        CellColorResolver.INSTANCE.clear();
+
+        int oneKResolved = resolveSerialized(new ItemStack(oneK));
+        int sixtyFourKResolved = resolveSerialized(new ItemStack(sixtyFourK));
+
+        assertNotEquals(oneKResolved, sixtyFourKResolved);
     }
 
     @Test
@@ -386,6 +428,15 @@ class CellColorResolverTest {
     private Item registerSeriesItem(String domain, String path, GeneratedCellSpriteFixtures.ModelSpriteFixture fixture) {
         Item item = new Item().setRegistryName(new ResourceLocation(domain, path));
         register(item, fixture);
+        return item;
+    }
+
+    private Item registerSeriesItem(String domain, String path, int bodyColor) {
+        Item item = new Item().setRegistryName(new ResourceLocation(domain, path));
+        TextureAtlasSprite bodySprite = TextureAtlasSprite.solid("body", 16, 16, bodyColor);
+        BakedQuad bodyQuad = new BakedQuad(new int[0], -1, EnumFacing.NORTH, bodySprite);
+        ForgeRegistries.ITEMS.register(item);
+        Minecraft.getMinecraft().getRenderItem().setModel(item, new FixtureBakedModel(java.util.Collections.singletonList(bodyQuad), bodySprite));
         return item;
     }
 

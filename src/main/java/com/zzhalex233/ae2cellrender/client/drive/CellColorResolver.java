@@ -28,13 +28,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class CellColorResolver implements IResourceManagerReloadListener {
-    private static final float COLOR_FAMILY_DELTA_E = 18.0F;
-    private static final float METADATA_COLOR_FAMILY_DELTA_E = 24.0F;
-    private static final float CHROMATIC_COLOR_FAMILY_DELTA_E = 42.0F;
-    private static final float CHROMATIC_FAMILY_HUE_DELTA = 55.0F;
+    private static final float LEGACY_FAMILY_DELTA_E = 18.0F;
+    private static final float LEGACY_METADATA_FAMILY_DELTA_E = 24.0F;
+    private static final float LEGACY_CHROMATIC_FAMILY_DELTA_E = 42.0F;
     private static final float MEANINGFUL_HUE_SATURATION = 0.18F;
     private static final float NEUTRAL_FAMILY_CHROMA_MAX = 12.0F;
-    private static final float NEUTRAL_FAMILY_LIGHTNESS_DELTA = 10.0F;
 
     public static final int NO_COLOR = -1;
     public static final CellColorResolver INSTANCE = new CellColorResolver();
@@ -325,8 +323,13 @@ public final class CellColorResolver implements IResourceManagerReloadListener {
             return null;
         }
 
+        if (!AE2CellRenderConfig.isSeriesColorFamiliesEnabled()) {
+            // Family splitting is off, so one series stays on a single canonical metadata.
+            return new MetadataFamily(findLowestMetadata(variants));
+        }
+
         int targetMetadata = stack.getMetadata();
-        int[] parents = buildFamilyForest(variants, METADATA_COLOR_FAMILY_DELTA_E);
+        int[] parents = buildFamilyForest(variants, metadataFamilyThreshold());
 
         Map<Integer, MetadataFamilyAccumulator> groupedFamilies = new LinkedHashMap<>();
         for (int index = 0; index < variants.size(); index++) {
@@ -456,7 +459,7 @@ public final class CellColorResolver implements IResourceManagerReloadListener {
     }
 
     private <T extends FamilyColorVariant> int[] buildFamilyForest(List<T> variants) {
-        return buildFamilyForest(variants, COLOR_FAMILY_DELTA_E);
+        return buildFamilyForest(variants, generalFamilyThreshold());
     }
 
     private <T extends FamilyColorVariant> int[] buildFamilyForest(List<T> variants, float deltaEThreshold) {
@@ -476,25 +479,49 @@ public final class CellColorResolver implements IResourceManagerReloadListener {
     }
 
     private boolean sameColorFamily(FamilyColorVariant left, FamilyColorVariant right) {
-        return sameColorFamily(left, right, COLOR_FAMILY_DELTA_E);
+        return sameColorFamily(left, right, generalFamilyThreshold());
     }
 
     private boolean sameColorFamily(FamilyColorVariant left, FamilyColorVariant right, float deltaEThreshold) {
         if (isNearNeutral(left.lab()) && isNearNeutral(right.lab())) {
+            float neutralThreshold = AE2CellRenderConfig.familyNeutralLightnessThreshold();
             if (CellColorMath.deltaE(left.lab(), right.lab()) > deltaEThreshold) {
                 return false;
             }
-            return Math.abs(left.lab().lightness() - right.lab().lightness()) <= NEUTRAL_FAMILY_LIGHTNESS_DELTA;
+            // Gray shells care more about brightness layering than tiny hue drift.
+            return Math.abs(left.lab().lightness() - right.lab().lightness()) <= neutralThreshold;
         }
 
-        if (hasMeaningfulHue(left.hsv()) && hasMeaningfulHue(right.hsv())) {
-            if (CellColorMath.hueDistance(left.hsv().hue(), right.hsv().hue()) > CHROMATIC_FAMILY_HUE_DELTA) {
+        if (AE2CellRenderConfig.isPreferSameHueFamiliesEnabled() && hasMeaningfulHue(left.hsv()) && hasMeaningfulHue(right.hsv())) {
+            float hueThreshold = AE2CellRenderConfig.familyHueThreshold();
+            if (CellColorMath.hueDistance(left.hsv().hue(), right.hsv().hue()) > hueThreshold) {
                 return false;
             }
-            return CellColorMath.deltaE(left.lab(), right.lab()) <= CHROMATIC_COLOR_FAMILY_DELTA_E;
+            return CellColorMath.deltaE(left.lab(), right.lab()) <= chromaticFamilyThreshold();
         }
 
+        // Once hue stays in range, the remaining split is just overall color drift.
         return CellColorMath.deltaE(left.lab(), right.lab()) <= deltaEThreshold;
+    }
+
+    private float generalFamilyThreshold() {
+        return scaledFamilyThreshold(LEGACY_FAMILY_DELTA_E);
+    }
+
+    private float metadataFamilyThreshold() {
+        return scaledFamilyThreshold(LEGACY_METADATA_FAMILY_DELTA_E);
+    }
+
+    private float chromaticFamilyThreshold() {
+        return AE2CellRenderConfig.familyColorDistanceThreshold();
+    }
+
+    private float scaledFamilyThreshold(float legacyThreshold) {
+        float configuredThreshold = chromaticFamilyThreshold();
+        if (configuredThreshold <= 0.0F) {
+            return 0.0F;
+        }
+        return configuredThreshold * (legacyThreshold / LEGACY_CHROMATIC_FAMILY_DELTA_E);
     }
 
     private boolean isNearNeutral(CellColorMath.LabColor color) {
@@ -513,6 +540,16 @@ public final class CellColorResolver implements IResourceManagerReloadListener {
         }
         parents[index] = find(parents, parent);
         return parents[index];
+    }
+
+    private int findLowestMetadata(List<MetadataVariantColor> variants) {
+        int canonicalMetadata = Integer.MAX_VALUE;
+        for (MetadataVariantColor variant : variants) {
+            if (variant.metadata() < canonicalMetadata) {
+                canonicalMetadata = variant.metadata();
+            }
+        }
+        return canonicalMetadata;
     }
 
     private void union(int[] parents, int leftIndex, int rightIndex) {

@@ -1,8 +1,12 @@
 package com.zzhalex233.ae2cellrender.client.drive;
 
+import com.zzhalex233.ae2cellrender.config.AE2CellRenderConfig;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.awt.Color;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntUnaryOperator;
 
@@ -10,6 +14,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CellColorMathTest {
+
+    @AfterEach
+    void resetConfigState() {
+        AE2CellRenderConfig.resetForTests();
+    }
 
     @Test
     void ignoresTransparentPixels() {
@@ -254,6 +263,39 @@ class CellColorMathTest {
         assertTrue(CellColorMath.colorDistance(output, 0xFFFFFFFF) > 600);
     }
 
+    @Test
+    void postProcessMainColorStopsAtStageOneWhenDisplayEnhancementIsDisabled() throws Exception {
+        int input = 0xFF7F4D2E;
+        int expected = invokeStageOne(input);
+
+        AE2CellRenderConfig.overrideEnableDisplayColorEnhancementForTests(false);
+
+        assertEquals(expected, CellColorMath.postProcessMainColor(input));
+    }
+
+    @Test
+    void postProcessMainColorBrightnessBoostScalesExistingValueLift() {
+        int input = 0xFF7F4D2E;
+        int baseline = CellColorMath.postProcessMainColor(input);
+
+        AE2CellRenderConfig.overrideDisplayBrightnessBoostForTests(0.55F);
+        int dimmed = CellColorMath.postProcessMainColor(input);
+
+        assertTrue(CellColorMath.hsv(dimmed).value() < CellColorMath.hsv(baseline).value());
+    }
+
+    @Test
+    void postProcessMainColorCanRelaxSoftPastelProtection() {
+        int input = 0xFFC8A0B4;
+        int baseline = CellColorMath.postProcessMainColor(input);
+
+        AE2CellRenderConfig.overrideSoftPastelPreservationForTests(false);
+        AE2CellRenderConfig.overrideDisplaySaturationBoostForTests(1.25F);
+        int relaxed = CellColorMath.postProcessMainColor(input);
+
+        assertTrue(CellColorMath.hsv(relaxed).saturation() > CellColorMath.hsv(baseline).saturation());
+    }
+
     private int maxChannelSpread(int color) {
         int red = (color >>> 16) & 0xFF;
         int green = (color >>> 8) & 0xFF;
@@ -264,5 +306,11 @@ class CellColorMathTest {
     private int argbFromHsv(float hue, float saturation, float value) {
         int rgb = Color.HSBtoRGB(hue / 360.0F, saturation, value);
         return 0xFF000000 | (rgb & 0xFFFFFF);
+    }
+
+    private int invokeStageOne(int input) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Method stageOne = CellColorMath.class.getDeclaredMethod("postProcessMainColorStageOne", int.class);
+        stageOne.setAccessible(true);
+        return (Integer) stageOne.invoke(null, input);
     }
 }

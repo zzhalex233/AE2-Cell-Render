@@ -5,11 +5,7 @@
   "package": "com.zzhalex233.ae2cellrender.mixin",
   "mixins": [
     "ae2.BlockDriveMixin",
-    "ae2.TileDriveMixin",
-    "crazyae.BlockDriveImprovedMixin",
-    "crazyae.TileImprovedDriveMixin",
-    "aeadditions.BlockHardMeDriveMixin",
-    "aeadditions.TileEntityHardMeDriveMixin"
+    "ae2.TileDriveMixin"
   ],
   "client": [],
   "server": []

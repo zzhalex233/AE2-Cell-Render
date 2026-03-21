@@ -1,5 +1,7 @@
 package com.zzhalex233.ae2cellrender.client.drive;
 
+import com.zzhalex233.ae2cellrender.config.AE2CellRenderConfig;
+
 import java.util.function.IntUnaryOperator;
 
 public final class CellColorMath {
@@ -62,7 +64,11 @@ public final class CellColorMath {
             return argb;
         }
 
-        return strengthenDisplay(postProcessMainColorStageOne(argb));
+        int stageOne = postProcessMainColorStageOne(argb);
+        if (!AE2CellRenderConfig.isDisplayColorEnhancementEnabled()) {
+            return stageOne;
+        }
+        return strengthenDisplay(stageOne);
     }
 
     private static int postProcessMainColorStageOne(int argb) {
@@ -94,6 +100,11 @@ public final class CellColorMath {
             return argb;
         }
 
+        float brightnessBoost = Math.max(0.0F, AE2CellRenderConfig.displayBrightnessBoost());
+        float saturationBoost = Math.max(0.0F, AE2CellRenderConfig.displaySaturationBoost());
+        float neutralCleanlinessBoost = Math.max(0.0F, AE2CellRenderConfig.neutralCleanlinessBoost());
+        boolean preserveSoftPastels = AE2CellRenderConfig.isSoftPastelPreservationEnabled();
+
         HsvColor hsv = hsv(argb);
         float saturation = hsv.saturation();
         float value = hsv.value();
@@ -105,8 +116,8 @@ public final class CellColorMath {
         float neutralWeight = 1.0F - chromaWeight;
 
         // Near-neutrals should get cleaner and brighter, while colored tones get a vivid-but-smooth lift.
-        float neutralValueLift = 0.015F * neutralWeight;
-        float coloredValueLift = 0.24F + (0.12F * mutedWeight) + (0.04F * vividWeight);
+        float neutralValueLift = (0.015F * neutralWeight) * neutralCleanlinessBoost;
+        float coloredValueLift = (0.24F + (0.12F * mutedWeight) + (0.04F * vividWeight)) * brightnessBoost;
         float enhancedValue = clampUnit(value + (darkness * lerp(neutralValueLift, coloredValueLift, chromaWeight)));
 
         float softSaturation = lerp(
@@ -114,11 +125,19 @@ public final class CellColorMath {
                 saturation * (0.96F + (0.02F * darkness)),
                 smoothstep(0.10F, 0.22F, saturation)
         );
-        float coloredSaturation = saturation + ((1.0F - saturation) * (0.24F + (0.24F * mutedWeight) + (0.10F * vividWeight) + (0.18F * darkness)));
-        float enhancedSaturation = clampUnit(lerp(softSaturation, coloredSaturation, colorBoostWeight));
+        if (!preserveSoftPastels) {
+            // Relax the stage-two pastel guard without changing the low-saturation branch itself.
+            softSaturation = lerp(softSaturation, saturation, 0.45F);
+        }
+        float coloredSaturation = saturation + ((1.0F - saturation) * (0.24F + (0.24F * mutedWeight) + (0.10F * vividWeight) + (0.18F * darkness)) * saturationBoost);
+        float saturationWeight = colorBoostWeight;
+        if (!preserveSoftPastels) {
+            saturationWeight = clampUnit(saturationWeight + (0.35F * smoothstep(0.12F, 0.24F, saturation) * Math.max(0.0F, saturationBoost - 1.0F)));
+        }
+        float enhancedSaturation = clampUnit(lerp(softSaturation, coloredSaturation, saturationWeight));
 
         float hue = hsv.hue();
-        float huePull = colorBoostWeight * smoothstep(0.30F, 0.60F, enhancedSaturation) * (0.12F + (0.10F * mutedWeight) + (0.04F * darkness));
+        float huePull = saturationWeight * smoothstep(0.30F, 0.60F, enhancedSaturation) * (0.12F + (0.10F * mutedWeight) + (0.04F * darkness));
         if (huePull > 0.0F) {
             hue = lerpHue(hue, blendedAnchorHue(hue), clampUnit(huePull));
         }

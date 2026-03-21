@@ -7,23 +7,13 @@ import java.util.List;
 public final class DriveSlotLayouts {
 
     public static final String AE2_LAYOUT_ID = "appliedenergistics2:drive";
-    public static final String CRAZYAE_LAYOUT_ID = "crazyae:improved_drive";
-    public static final String AEADDITIONS_LAYOUT_ID = "aeadditions:hardmedrive";
 
     private static final Layout AE2 = new Layout(AE2_LAYOUT_ID, buildAe2Slots());
-    private static final Layout CRAZYAE = new Layout(CRAZYAE_LAYOUT_ID, buildCrazyAeSlots());
-    private static final Layout AEADDITIONS = new Layout(AEADDITIONS_LAYOUT_ID, buildAeAdditionsSlots());
 
     private DriveSlotLayouts() {
     }
 
     public static Layout forId(String layoutId) {
-        if (CRAZYAE_LAYOUT_ID.equals(layoutId)) {
-            return CRAZYAE;
-        }
-        if (AEADDITIONS_LAYOUT_ID.equals(layoutId)) {
-            return AEADDITIONS;
-        }
         return AE2;
     }
 
@@ -44,37 +34,6 @@ public final class DriveSlotLayouts {
                     baseMaxY - DriveCellSlotLayout.TOP_BAND + DriveCellSlotLayout.Y_OVERDRAW
             );
             slots.add(new Slot(baseRect, renderedRect, DriveCellSlotLayout.FRONT_Z, DriveCellSlotLayout.BACK_Z));
-        }
-        return slots;
-    }
-
-    private static List<Slot> buildCrazyAeSlots() {
-        List<Slot> slots = new ArrayList<>(35);
-        for (int row = 0; row < 5; row++) {
-            for (int column = 0; column < 7; column++) {
-                float minX = (14.0F - (column * 2.0F)) / 16.0F;
-                float maxX = (15.0F - (column * 2.0F)) / 16.0F;
-                float minY = (13.0F - (row * 3.0F)) / 16.0F;
-                float maxY = minY + (2.0F / 16.0F);
-                DriveCellSlotLayout.SlotRect rect = new DriveCellSlotLayout.SlotRect(minX, minY, maxX, maxY);
-                slots.add(new Slot(rect, rect, 1.0F / 16.0F, 2.0F / 16.0F));
-            }
-        }
-        return slots;
-    }
-
-    private static List<Slot> buildAeAdditionsSlots() {
-        List<Slot> slots = new ArrayList<>(3);
-        for (int row = 0; row < 3; row++) {
-            float minY = (10.0F - (row * 3.0F)) / 16.0F;
-            float maxY = minY + (2.0F / 16.0F);
-            DriveCellSlotLayout.SlotRect rect = new DriveCellSlotLayout.SlotRect(
-                    5.0F / 16.0F,
-                    minY,
-                    11.0F / 16.0F,
-                    maxY
-            );
-            slots.add(new Slot(rect, rect, 0.0F, 1.0F / 16.0F));
         }
         return slots;
     }
