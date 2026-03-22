@@ -8,6 +8,7 @@ META-INF/
 run/
 out/
 
+
 # Ignore Gradle GUI config
 gradle-app.setting
 
@@ -31,4 +32,7 @@ gradle-app.setting
 
 # Local compatibility test drop-ins (LazyAE2 jar goes into local-test-mods/1.12.2/)
 local-test-mods/
+
+# Local color analysis scratch files
+tmp/
 

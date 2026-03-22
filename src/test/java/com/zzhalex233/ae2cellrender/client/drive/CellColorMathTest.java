@@ -244,6 +244,13 @@ class CellColorMathTest {
     }
 
     @Test
+    void postProcessMainColorSkipsFilteringForVeryDarkRawColors() {
+        int input = 0xFF441E1E;
+
+        assertEquals(input, CellColorMath.postProcessMainColor(input));
+    }
+
+    @Test
     void postProcessMainColorPreservesLayeringBetweenWhiteAndGrays() {
         CellColorMath.HsvColor white = CellColorMath.hsv(CellColorMath.postProcessMainColor(0xFFFFFFFF));
         CellColorMath.HsvColor lightGray = CellColorMath.hsv(CellColorMath.postProcessMainColor(0xFFD0D0D0));

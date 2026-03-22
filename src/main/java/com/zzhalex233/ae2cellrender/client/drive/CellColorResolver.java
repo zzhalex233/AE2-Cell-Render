@@ -33,6 +33,8 @@ public final class CellColorResolver implements IResourceManagerReloadListener {
     private static final float LEGACY_CHROMATIC_FAMILY_DELTA_E = 42.0F;
     private static final float MEANINGFUL_HUE_SATURATION = 0.18F;
     private static final float NEUTRAL_FAMILY_CHROMA_MAX = 12.0F;
+    private static final float SOFT_CHROMATIC_SATURATION_MAX = 0.38F;
+    private static final float NEUTRAL_HUE_ANCHOR_MIN_SATURATION = 0.03F;
 
     public static final int NO_COLOR = -1;
     public static final CellColorResolver INSTANCE = new CellColorResolver();
@@ -492,6 +494,11 @@ public final class CellColorResolver implements IResourceManagerReloadListener {
             return Math.abs(left.lab().lightness() - right.lab().lightness()) <= neutralThreshold;
         }
 
+        if (bridgesNeutralToSoftChromatic(left, right)) {
+            // A slightly tinted shell should stay with the same pale shell family when the overall drift is still small.
+            return CellColorMath.deltaE(left.lab(), right.lab()) <= chromaticFamilyThreshold();
+        }
+
         if (AE2CellRenderConfig.isPreferSameHueFamiliesEnabled() && hasMeaningfulHue(left.hsv()) && hasMeaningfulHue(right.hsv())) {
             float hueThreshold = AE2CellRenderConfig.familyHueThreshold();
             if (CellColorMath.hueDistance(left.hsv().hue(), right.hsv().hue()) > hueThreshold) {
@@ -531,6 +538,30 @@ public final class CellColorResolver implements IResourceManagerReloadListener {
 
     private boolean hasMeaningfulHue(CellColorMath.HsvColor color) {
         return color.saturation() >= MEANINGFUL_HUE_SATURATION;
+    }
+
+    private boolean bridgesNeutralToSoftChromatic(FamilyColorVariant left, FamilyColorVariant right) {
+        boolean leftNeutral = isNearNeutral(left.lab());
+        boolean rightNeutral = isNearNeutral(right.lab());
+        if (leftNeutral == rightNeutral) {
+            return false;
+        }
+
+        FamilyColorVariant neutral = leftNeutral ? left : right;
+        FamilyColorVariant softChromatic = leftNeutral ? right : left;
+        if (!hasMeaningfulHue(softChromatic.hsv())) {
+            return false;
+        }
+        if (softChromatic.hsv().saturation() > SOFT_CHROMATIC_SATURATION_MAX) {
+            return false;
+        }
+
+        if (neutral.hsv().saturation() < NEUTRAL_HUE_ANCHOR_MIN_SATURATION) {
+            return true;
+        }
+
+        float hueThreshold = AE2CellRenderConfig.familyHueThreshold();
+        return CellColorMath.hueDistance(neutral.hsv().hue(), softChromatic.hsv().hue()) <= hueThreshold;
     }
 
     private int find(int[] parents, int index) {

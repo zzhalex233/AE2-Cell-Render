@@ -416,6 +416,39 @@ class CellColorResolverTest {
         assertEquals(oneKResolved, oneMbResolved);
     }
 
+    @Test
+    void crazyAeStorageCellMegabyteTiersStayWithCanonicalRegistrySeriesColor() {
+        Item twoFiftySixK = registerSeriesItemFromResource(
+                "crazyae",
+                "storage_cell_256k",
+                "/com/zzhalex233/ae2cellrender/client/drive/crazyae/storage_cell_256k.png"
+        );
+        Item oneMb = registerSeriesItemFromResource(
+                "crazyae",
+                "storage_cell_1mb",
+                "/com/zzhalex233/ae2cellrender/client/drive/crazyae/storage_cell_1mb.png"
+        );
+        Item fourMb = registerSeriesItemFromResource(
+                "crazyae",
+                "storage_cell_4mb",
+                "/com/zzhalex233/ae2cellrender/client/drive/crazyae/storage_cell_4mb.png"
+        );
+        Item sixtyFourMb = registerSeriesItemFromResource(
+                "crazyae",
+                "storage_cell_64mb",
+                "/com/zzhalex233/ae2cellrender/client/drive/crazyae/storage_cell_64mb.png"
+        );
+
+        int canonicalResolved = resolveSerialized(new ItemStack(twoFiftySixK));
+        int oneMbResolved = resolveSerialized(new ItemStack(oneMb));
+        int fourMbResolved = resolveSerialized(new ItemStack(fourMb));
+        int sixtyFourMbResolved = resolveSerialized(new ItemStack(sixtyFourMb));
+
+        assertEquals(canonicalResolved, oneMbResolved);
+        assertEquals(canonicalResolved, fourMbResolved);
+        assertEquals(canonicalResolved, sixtyFourMbResolved);
+    }
+
     private void register(Item item, GeneratedCellSpriteFixtures.ModelSpriteFixture fixture) {
         ForgeRegistries.ITEMS.register(item);
         Minecraft.getMinecraft().getRenderItem().setModel(item, new FixtureBakedModel(fixture.quads, fixture.bodySprite));
@@ -434,6 +467,16 @@ class CellColorResolverTest {
     private Item registerSeriesItem(String domain, String path, int bodyColor) {
         Item item = new Item().setRegistryName(new ResourceLocation(domain, path));
         TextureAtlasSprite bodySprite = TextureAtlasSprite.solid("body", 16, 16, bodyColor);
+        BakedQuad bodyQuad = new BakedQuad(new int[0], -1, EnumFacing.NORTH, bodySprite);
+        ForgeRegistries.ITEMS.register(item);
+        Minecraft.getMinecraft().getRenderItem().setModel(item, new FixtureBakedModel(java.util.Collections.singletonList(bodyQuad), bodySprite));
+        return item;
+    }
+
+    private Item registerSeriesItemFromResource(String domain, String path, String resourcePath) {
+        GeneratedCellSpriteFixtures.SpritePixels sprite = GeneratedCellSpriteFixtures.spriteFromResource(resourcePath);
+        Item item = new Item().setRegistryName(new ResourceLocation(domain, path));
+        TextureAtlasSprite bodySprite = TextureAtlasSprite.fromPixels(path, sprite.width, sprite.height, sprite.pixels);
         BakedQuad bodyQuad = new BakedQuad(new int[0], -1, EnumFacing.NORTH, bodySprite);
         ForgeRegistries.ITEMS.register(item);
         Minecraft.getMinecraft().getRenderItem().setModel(item, new FixtureBakedModel(java.util.Collections.singletonList(bodyQuad), bodySprite));

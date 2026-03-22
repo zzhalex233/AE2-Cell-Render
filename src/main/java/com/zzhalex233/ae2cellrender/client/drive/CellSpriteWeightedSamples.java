@@ -15,12 +15,12 @@ final class CellSpriteWeightedSamples {
     static final int DARK_OUTLINE_RGB_RANGE_MAX = 28;
     static final float DARK_OUTLINE_PENALTY = 0.12F;
     static final float BRIGHT_HIGHLIGHT_LUMINANCE_MIN = 0.94F;
-    static final float BRIGHT_HIGHLIGHT_SATURATION_MAX = 0.10F;
+    static final float BRIGHT_HIGHLIGHT_SATURATION_MAX = 0.02F;
     static final float BRIGHT_HIGHLIGHT_PENALTY = 0.35F;
     static final float VERY_DARK_LUMINANCE = 0.12F;
     static final float VERY_DARK_PENALTY = 0.25F;
     static final float VERY_BRIGHT_LUMINANCE = 0.94F;
-    static final float VERY_BRIGHT_PENALTY = 0.40F;
+    static final float VERY_BRIGHT_PENALTY = 0.85F;
     static final float SATURATION_WEIGHT_BASE = 0.35F;
     static final float SATURATION_WEIGHT_GAIN = 0.65F;
     static final float SATURATION_BOOST_DARK_LUMINANCE = 0.18F;

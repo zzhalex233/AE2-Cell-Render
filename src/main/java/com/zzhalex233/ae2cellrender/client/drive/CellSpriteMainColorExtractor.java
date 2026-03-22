@@ -3,6 +3,7 @@ package com.zzhalex233.ae2cellrender.client.drive;
 import java.util.List;
 
 final class CellSpriteMainColorExtractor {
+    private static final float FAMILY_SCORE_TIE_MARGIN = 1.0F;
 
     private CellSpriteMainColorExtractor() {
     }
@@ -25,12 +26,17 @@ final class CellSpriteMainColorExtractor {
 
         LabClusterReducer.Cluster familyAnchor = clusters.get(0);
         float bestFamilyScore = familyScore(familyAnchor, clusters, globalLab);
+        float bestFamilyRepresentativeScore = familyRepresentativeScore(familyAnchor, clusters);
         for (int i = 1; i < clusters.size(); i++) {
             LabClusterReducer.Cluster candidate = clusters.get(i);
             float candidateFamilyScore = familyScore(candidate, clusters, globalLab);
-            if (candidateFamilyScore > bestFamilyScore) {
+            float candidateRepresentativeScore = familyRepresentativeScore(candidate, clusters);
+            if (candidateFamilyScore > bestFamilyScore + FAMILY_SCORE_TIE_MARGIN
+                    || (Math.abs(candidateFamilyScore - bestFamilyScore) <= FAMILY_SCORE_TIE_MARGIN
+                    && candidateRepresentativeScore > bestFamilyRepresentativeScore)) {
                 familyAnchor = candidate;
                 bestFamilyScore = candidateFamilyScore;
+                bestFamilyRepresentativeScore = candidateRepresentativeScore;
             }
         }
 
@@ -62,7 +68,7 @@ final class CellSpriteMainColorExtractor {
         float score = 0.0F;
         for (LabClusterReducer.Cluster cluster : clusters) {
             if (sameFamily(anchor, cluster)) {
-                score += cluster.totalWeight() * structuralCredibility(cluster) * globalCloseness(cluster, globalLab);
+                score += familySupport(cluster, globalLab);
             }
         }
         return score;
@@ -90,6 +96,17 @@ final class CellSpriteMainColorExtractor {
                 - (cluster.outerWeight() * 0.05F)
                 - (cluster.outlineWeight() * 0.40F)
                 - (cluster.highlightWeight() * 0.20F);
+    }
+
+    private static float familyRepresentativeScore(LabClusterReducer.Cluster anchor, List<LabClusterReducer.Cluster> clusters) {
+        float bestScore = Float.NEGATIVE_INFINITY;
+        for (LabClusterReducer.Cluster cluster : clusters) {
+            if (!sameFamily(anchor, cluster)) {
+                continue;
+            }
+            bestScore = Math.max(bestScore, representativeScore(cluster));
+        }
+        return bestScore;
     }
 
     private static boolean sameFamily(LabClusterReducer.Cluster left, LabClusterReducer.Cluster right) {
@@ -139,6 +156,14 @@ final class CellSpriteMainColorExtractor {
         float solidity = cluster.solidity();
         float innerRatio = cluster.totalWeight() <= 0.0F ? 0.0F : cluster.innerWeight() / cluster.totalWeight();
         return (solidity * 0.75F) + (innerRatio * 0.25F);
+    }
+
+    private static float familySupport(LabClusterReducer.Cluster cluster, CellColorMath.LabColor globalLab) {
+        // Broad shell regions should outrank small bright inserts when both are otherwise plausible body colors.
+        float areaWeight = cluster.totalWeight() + (cluster.sampleCount() * 0.20F);
+        // Keep the global average as a nudge instead of letting it dominate multi-tone sprites.
+        float globalBias = 0.55F + (0.45F * globalCloseness(cluster, globalLab));
+        return areaWeight * structuralCredibility(cluster) * globalBias;
     }
 
     private static float globalCloseness(LabClusterReducer.Cluster cluster, CellColorMath.LabColor globalLab) {

@@ -1,5 +1,9 @@
 package com.zzhalex233.ae2cellrender.client.drive;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.InputStream;
 import java.awt.Color;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -33,6 +37,26 @@ final class GeneratedCellSpriteFixtures {
                 opaque(0x7E, 0xA7, 0x68),
                 opaque(0xC8, 0xA1, 0x5A)
         );
+    }
+
+    static SpritePixels spriteFromResource(String path) {
+        try (InputStream stream = GeneratedCellSpriteFixtures.class.getResourceAsStream(path)) {
+            if (stream == null) {
+                throw new IllegalArgumentException("Missing sprite resource: " + path);
+            }
+
+            BufferedImage image = ImageIO.read(stream);
+            if (image == null) {
+                throw new IllegalArgumentException("Unreadable sprite resource: " + path);
+            }
+
+            int width = image.getWidth();
+            int height = image.getHeight();
+            int[] pixels = image.getRGB(0, 0, width, height, null, 0, width);
+            return new SpritePixels(width, height, pixels, 0, 0, 0);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to load sprite resource: " + path, e);
+        }
     }
 
     static SpritePixels bodyWithIndicatorAndOutline() {

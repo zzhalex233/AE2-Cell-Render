@@ -7,6 +7,7 @@ import java.util.function.IntUnaryOperator;
 public final class CellColorMath {
 
     private static final float[] DISPLAY_HUE_ANCHORS = {0.0F, 30.0F, 60.0F, 120.0F, 180.0F, 210.0F, 240.0F, 300.0F};
+    private static final float VERY_DARK_RAW_VALUE_MAX = 0.30F;
 
     private CellColorMath() {
     }
@@ -61,6 +62,10 @@ public final class CellColorMath {
     public static int postProcessMainColor(int argb) {
         int alpha = (argb >>> 24) & 0xFF;
         if (alpha == 0) {
+            return argb;
+        }
+        // Very dark raw colors already read as their intended display color, so lifting them only distorts the series.
+        if (isVeryDarkRawColor(argb)) {
             return argb;
         }
 
@@ -213,6 +218,10 @@ public final class CellColorMath {
 
         float saturation = max == 0.0F ? 0.0F : delta / max;
         return new HsvColor(hue, saturation, max);
+    }
+
+    private static boolean isVeryDarkRawColor(int argb) {
+        return hsv(argb).value() <= VERY_DARK_RAW_VALUE_MAX;
     }
 
     static int argb(int alpha, int red, int green, int blue) {
