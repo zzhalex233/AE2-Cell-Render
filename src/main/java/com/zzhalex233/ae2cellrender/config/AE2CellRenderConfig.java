@@ -11,6 +11,7 @@ public final class AE2CellRenderConfig {
     private static final String FAMILY_HUE_THRESHOLD = "familyHueThreshold";
     private static final String FAMILY_COLOR_DISTANCE_THRESHOLD = "familyColorDistanceThreshold";
     private static final String FAMILY_NEUTRAL_LIGHTNESS_THRESHOLD = "familyNeutralLightnessThreshold";
+    private static final String ENABLE_RAW_COLOR_FILTER = "enableRawColorFilter";
     private static final String ENABLE_DISPLAY_COLOR_ENHANCEMENT = "enableDisplayColorEnhancement";
     private static final String DISPLAY_BRIGHTNESS_BOOST = "displayBrightnessBoost";
     private static final String DISPLAY_SATURATION_BOOST = "displaySaturationBoost";
@@ -22,6 +23,7 @@ public final class AE2CellRenderConfig {
     private static final float DEFAULT_FAMILY_HUE_THRESHOLD = 55.0F;
     private static final float DEFAULT_FAMILY_COLOR_DISTANCE_THRESHOLD = 42.0F;
     private static final float DEFAULT_FAMILY_NEUTRAL_LIGHTNESS_THRESHOLD = 10.0F;
+    private static final boolean DEFAULT_ENABLE_RAW_COLOR_FILTER = false;
     private static final boolean DEFAULT_ENABLE_DISPLAY_COLOR_ENHANCEMENT = true;
     private static final float DEFAULT_DISPLAY_BRIGHTNESS_BOOST = 1.0F;
     private static final float DEFAULT_DISPLAY_SATURATION_BOOST = 1.0F;
@@ -38,6 +40,8 @@ public final class AE2CellRenderConfig {
     private static volatile Float familyColorDistanceThresholdOverride;
     private static volatile float familyNeutralLightnessThreshold = DEFAULT_FAMILY_NEUTRAL_LIGHTNESS_THRESHOLD;
     private static volatile Float familyNeutralLightnessThresholdOverride;
+    private static volatile boolean enableRawColorFilter = DEFAULT_ENABLE_RAW_COLOR_FILTER;
+    private static volatile Boolean enableRawColorFilterOverride;
     private static volatile boolean enableDisplayColorEnhancement = DEFAULT_ENABLE_DISPLAY_COLOR_ENHANCEMENT;
     private static volatile Boolean enableDisplayColorEnhancementOverride;
     private static volatile float displayBrightnessBoost = DEFAULT_DISPLAY_BRIGHTNESS_BOOST;
@@ -98,6 +102,12 @@ public final class AE2CellRenderConfig {
                     0.0F,
                     100.0F,
                     "How much gray, white, and pale shades may differ in brightness. Example: lower splits gray and white sooner; higher keeps neutrals together."
+            );
+            enableRawColorFilter = configuration.getBoolean(
+                    ENABLE_RAW_COLOR_FILTER,
+                    CATEGORY_CLIENT,
+                    DEFAULT_ENABLE_RAW_COLOR_FILTER,
+                    "If true, detected raw colors go through the display filter. Example: turn this off to show the extracted raw main color directly."
             );
             enableDisplayColorEnhancement = configuration.getBoolean(
                     ENABLE_DISPLAY_COLOR_ENHANCEMENT,
@@ -167,6 +177,11 @@ public final class AE2CellRenderConfig {
         return override != null ? override.floatValue() : familyNeutralLightnessThreshold;
     }
 
+    public static boolean isRawColorFilterEnabled() {
+        Boolean override = enableRawColorFilterOverride;
+        return override != null ? override.booleanValue() : enableRawColorFilter;
+    }
+
     public static boolean isDisplayColorEnhancementEnabled() {
         Boolean override = enableDisplayColorEnhancementOverride;
         return override != null ? override.booleanValue() : enableDisplayColorEnhancement;
@@ -212,6 +227,10 @@ public final class AE2CellRenderConfig {
         familyNeutralLightnessThresholdOverride = value;
     }
 
+    public static void overrideRawColorFilterForTests(boolean enabled) {
+        enableRawColorFilterOverride = enabled;
+    }
+
     public static void overrideEnableDisplayColorEnhancementForTests(boolean enabled) {
         enableDisplayColorEnhancementOverride = enabled;
     }
@@ -240,6 +259,7 @@ public final class AE2CellRenderConfig {
         familyHueThresholdOverride = null;
         familyColorDistanceThresholdOverride = null;
         familyNeutralLightnessThresholdOverride = null;
+        enableRawColorFilterOverride = null;
         enableDisplayColorEnhancementOverride = null;
         displayBrightnessBoostOverride = null;
         displaySaturationBoostOverride = null;
@@ -254,6 +274,7 @@ public final class AE2CellRenderConfig {
         familyHueThreshold = DEFAULT_FAMILY_HUE_THRESHOLD;
         familyColorDistanceThreshold = DEFAULT_FAMILY_COLOR_DISTANCE_THRESHOLD;
         familyNeutralLightnessThreshold = DEFAULT_FAMILY_NEUTRAL_LIGHTNESS_THRESHOLD;
+        enableRawColorFilter = DEFAULT_ENABLE_RAW_COLOR_FILTER;
         enableDisplayColorEnhancement = DEFAULT_ENABLE_DISPLAY_COLOR_ENHANCEMENT;
         displayBrightnessBoost = DEFAULT_DISPLAY_BRIGHTNESS_BOOST;
         displaySaturationBoost = DEFAULT_DISPLAY_SATURATION_BOOST;

@@ -12,11 +12,23 @@ public class VertexFormatElement {
         MATRIX
     }
 
+    private final EnumUsage usage;
+    private final int index;
+
+    public VertexFormatElement() {
+        this(EnumUsage.GENERIC, 0);
+    }
+
+    public VertexFormatElement(EnumUsage usage, int index) {
+        this.usage = usage;
+        this.index = index;
+    }
+
     public EnumUsage getUsage() {
-        return EnumUsage.GENERIC;
+        return usage;
     }
 
     public int getIndex() {
-        return 0;
+        return index;
     }
 }

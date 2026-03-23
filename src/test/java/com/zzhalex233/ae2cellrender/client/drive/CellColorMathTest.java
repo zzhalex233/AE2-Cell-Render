@@ -2,6 +2,7 @@ package com.zzhalex233.ae2cellrender.client.drive;
 
 import com.zzhalex233.ae2cellrender.config.AE2CellRenderConfig;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.awt.Color;
@@ -14,6 +15,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CellColorMathTest {
+
+    @BeforeEach
+    void enableRawFilterByDefaultForColorMathAssertions() {
+        AE2CellRenderConfig.overrideRawColorFilterForTests(true);
+    }
 
     @AfterEach
     void resetConfigState() {
@@ -271,6 +277,15 @@ class CellColorMathTest {
     }
 
     @Test
+    void postProcessMainColorReturnsRawColorWhenRawFilterIsDisabled() {
+        int input = 0xFF7F4D2E;
+
+        AE2CellRenderConfig.overrideRawColorFilterForTests(false);
+
+        assertEquals(input, CellColorMath.postProcessMainColor(input));
+    }
+
+    @Test
     void postProcessMainColorStopsAtStageOneWhenDisplayEnhancementIsDisabled() throws Exception {
         int input = 0xFF7F4D2E;
         int expected = invokeStageOne(input);
@@ -321,3 +336,4 @@ class CellColorMathTest {
         return (Integer) stageOne.invoke(null, input);
     }
 }
+

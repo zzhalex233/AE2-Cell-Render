@@ -27,9 +27,6 @@ import java.util.List;
 public final class DriveDelegatingBakedModel implements IBakedModel {
 
     private static final DriveCellBodyModelBuilder BODY_MODEL_BUILDER = new DriveCellBodyModelBuilder();
-    private static final float TOP_MULTIPLIER = 1.05F;
-    private static final float SIDE_MULTIPLIER = 0.93F;
-    private static final float BOTTOM_MULTIPLIER = 0.92F;
 
     private final IBakedModel delegate;
 
@@ -129,14 +126,10 @@ public final class DriveDelegatingBakedModel implements IBakedModel {
 
     private void appendModelQuads(List<BakedQuad> quads, TextureAtlasSprite sprite, Matrix4f transform, DriveCellBodyModelBuilder.DriveCellBodyModel model, int color) {
         int alpha = (color >>> 24) & 0xFF;
-        int frontColor = color & 0x00FFFFFF;
-        int topColor = shadeColor(color, TOP_MULTIPLIER);
-        int sideColor = shadeColor(color, SIDE_MULTIPLIER);
-        int bottomColor = shadeColor(color, BOTTOM_MULTIPLIER);
+        int rgb = color & 0x00FFFFFF;
 
         for (DriveCellBodyModelBuilder.Face face : model.getFaces()) {
-            int faceRgb = faceColor(face.getKind(), frontColor, topColor, sideColor, bottomColor);
-            quads.add(buildQuad(sprite, transform, face, faceRgb, alpha));
+            quads.add(buildQuad(sprite, transform, face, rgb, alpha));
         }
     }
 
@@ -149,7 +142,8 @@ public final class DriveDelegatingBakedModel implements IBakedModel {
         EnumFacing facing = facingFor(face.getKind(), transform);
 
         UnpackedBakedQuad.Builder builder = new UnpackedBakedQuad.Builder(DefaultVertexFormats.BLOCK);
-        builder.setApplyDiffuseLighting(true);
+        // Keep the cell body color stable and let the extrusion geometry provide the shape.
+        builder.setApplyDiffuseLighting(false);
         builder.setTexture(sprite);
         builder.setQuadOrientation(facing);
 
@@ -239,36 +233,6 @@ public final class DriveDelegatingBakedModel implements IBakedModel {
         }
         transform.transform(normal);
         return EnumFacing.getFacingFromVector(normal.x, normal.y, normal.z);
-    }
-
-    private int faceColor(DriveCellBodyModelBuilder.FaceKind kind, int frontColor, int topColor, int sideColor, int bottomColor) {
-        switch (kind) {
-            case FRONT:
-                return frontColor;
-            case TOP:
-                return topColor;
-            case LEFT:
-            case RIGHT:
-                return sideColor;
-            case BOTTOM:
-                return bottomColor;
-            default:
-                throw new IllegalStateException("Unhandled face kind: " + kind);
-        }
-    }
-
-    private int shadeColor(int argb, float multiplier) {
-        return (shadeComponent((argb >>> 16) & 0xFF, multiplier) << 16)
-                | (shadeComponent((argb >>> 8) & 0xFF, multiplier) << 8)
-                | shadeComponent(argb & 0xFF, multiplier);
-    }
-
-    private int shadeComponent(int component, float multiplier) {
-        int shaded = Math.round(component * multiplier);
-        if (shaded < 0) {
-            return 0;
-        }
-        return Math.min(255, shaded);
     }
 
     private void putVertex(IVertexConsumer consumer, EnumFacing facing, Vector3f vertex, float u, float v, int rgb, int alpha) {

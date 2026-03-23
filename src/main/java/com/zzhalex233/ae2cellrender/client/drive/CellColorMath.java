@@ -64,6 +64,10 @@ public final class CellColorMath {
         if (alpha == 0) {
             return argb;
         }
+        // This keeps a true raw-color mode for users who want the extractor output with no display cleanup.
+        if (!AE2CellRenderConfig.isRawColorFilterEnabled()) {
+            return argb;
+        }
         // Very dark raw colors already read as their intended display color, so lifting them only distorts the series.
         if (isVeryDarkRawColor(argb)) {
             return argb;
@@ -393,3 +397,6 @@ public final class CellColorMath {
         }
     }
 }
+
+
+

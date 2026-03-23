@@ -23,6 +23,7 @@ class AE2CellRenderConfigTest {
         assertEquals(55.0F, AE2CellRenderConfig.familyHueThreshold(), 0.001F);
         assertEquals(42.0F, AE2CellRenderConfig.familyColorDistanceThreshold(), 0.001F);
         assertEquals(10.0F, AE2CellRenderConfig.familyNeutralLightnessThreshold(), 0.001F);
+        assertFalse(AE2CellRenderConfig.isRawColorFilterEnabled());
         assertTrue(AE2CellRenderConfig.isDisplayColorEnhancementEnabled());
         assertEquals(1.0F, AE2CellRenderConfig.displayBrightnessBoost(), 0.001F);
         assertEquals(1.0F, AE2CellRenderConfig.displaySaturationBoost(), 0.001F);
@@ -37,6 +38,7 @@ class AE2CellRenderConfigTest {
         AE2CellRenderConfig.overrideFamilyHueThresholdForTests(20.0F);
         AE2CellRenderConfig.overrideFamilyColorDistanceThresholdForTests(30.0F);
         AE2CellRenderConfig.overrideFamilyNeutralLightnessThresholdForTests(6.0F);
+        AE2CellRenderConfig.overrideRawColorFilterForTests(false);
         AE2CellRenderConfig.overrideEnableDisplayColorEnhancementForTests(false);
         AE2CellRenderConfig.overrideDisplayBrightnessBoostForTests(0.8F);
         AE2CellRenderConfig.overrideDisplaySaturationBoostForTests(0.7F);
@@ -48,6 +50,7 @@ class AE2CellRenderConfigTest {
         assertEquals(20.0F, AE2CellRenderConfig.familyHueThreshold(), 0.001F);
         assertEquals(30.0F, AE2CellRenderConfig.familyColorDistanceThreshold(), 0.001F);
         assertEquals(6.0F, AE2CellRenderConfig.familyNeutralLightnessThreshold(), 0.001F);
+        assertFalse(AE2CellRenderConfig.isRawColorFilterEnabled());
         assertFalse(AE2CellRenderConfig.isDisplayColorEnhancementEnabled());
         assertEquals(0.8F, AE2CellRenderConfig.displayBrightnessBoost(), 0.001F);
         assertEquals(0.7F, AE2CellRenderConfig.displaySaturationBoost(), 0.001F);
@@ -61,6 +64,7 @@ class AE2CellRenderConfigTest {
         assertEquals(55.0F, AE2CellRenderConfig.familyHueThreshold(), 0.001F);
         assertEquals(42.0F, AE2CellRenderConfig.familyColorDistanceThreshold(), 0.001F);
         assertEquals(10.0F, AE2CellRenderConfig.familyNeutralLightnessThreshold(), 0.001F);
+        assertFalse(AE2CellRenderConfig.isRawColorFilterEnabled());
         assertTrue(AE2CellRenderConfig.isDisplayColorEnhancementEnabled());
         assertEquals(1.0F, AE2CellRenderConfig.displayBrightnessBoost(), 0.001F);
         assertEquals(1.0F, AE2CellRenderConfig.displaySaturationBoost(), 0.001F);
@@ -68,3 +72,4 @@ class AE2CellRenderConfigTest {
         assertEquals(1.0F, AE2CellRenderConfig.neutralCleanlinessBoost(), 0.001F);
     }
 }
+
