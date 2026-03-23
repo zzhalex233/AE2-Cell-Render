@@ -35,4 +35,4 @@ local-test-mods/
 
 # Local color analysis scratch files
 tmp/
-
+.tmp/

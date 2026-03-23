@@ -5,21 +5,28 @@ import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.EnumFacing;
 
 public class BakedQuad {
+    private final int[] vertexData;
     private TextureAtlasSprite sprite;
     private boolean hasTintIndex;
     private int tintIndex;
+    private final EnumFacing face;
+    private final boolean diffuseLighting;
 
     public BakedQuad() {
+        this(new int[0], -1, EnumFacing.NORTH, null, false, null);
     }
 
     public BakedQuad(int[] vertexData, int tintIndex, EnumFacing face, TextureAtlasSprite sprite) {
-        this.sprite = sprite;
-        this.tintIndex = tintIndex;
-        this.hasTintIndex = true;
+        this(vertexData, tintIndex, face, sprite, false, null);
     }
 
     public BakedQuad(int[] vertexData, int tintIndex, EnumFacing face, TextureAtlasSprite sprite, boolean applyDiffuseLighting, VertexFormat format) {
-        this(vertexData, tintIndex, face, sprite);
+        this.vertexData = vertexData == null ? new int[0] : vertexData.clone();
+        this.sprite = sprite;
+        this.tintIndex = tintIndex;
+        this.hasTintIndex = tintIndex >= 0;
+        this.face = face == null ? EnumFacing.NORTH : face;
+        this.diffuseLighting = applyDiffuseLighting;
     }
 
     public TextureAtlasSprite getSprite() {
@@ -31,7 +38,7 @@ public class BakedQuad {
     }
 
     public int[] getVertexData() {
-        return new int[0];
+        return vertexData.clone();
     }
 
     public boolean hasTintIndex() {
@@ -52,7 +59,7 @@ public class BakedQuad {
     }
 
     public EnumFacing getFace() {
-        return EnumFacing.NORTH;
+        return face;
     }
 
     public void pipe(net.minecraftforge.client.model.pipeline.IVertexConsumer consumer) {
@@ -63,6 +70,6 @@ public class BakedQuad {
     }
 
     public boolean shouldApplyDiffuseLighting() {
-        return false;
+        return diffuseLighting;
     }
 }
