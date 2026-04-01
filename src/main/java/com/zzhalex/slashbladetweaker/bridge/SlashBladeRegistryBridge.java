@@ -118,6 +118,10 @@ public class SlashBladeRegistryBridge {
         registerAwakeRecipes();
     }
 
+    public void registerQueuedContent() {
+        apply();
+    }
+
     protected void configurePermissionState() {
         scriptedEntityRegistry = new ScriptedEntityRegistry();
         scriptedSpecialAttackRegistry = new ScriptedSpecialAttackRegistry(
@@ -196,6 +200,10 @@ public class SlashBladeRegistryBridge {
         );
     }
 
+    public ScriptedEntityRegistry getScriptedEntityRegistry() {
+        return scriptedEntityRegistry;
+    }
+
     protected BladeDefinition resolveBladeDefinition(BladeDefinition definition) {
         return new BladeDefinition(
                 definition.getId(),
@@ -229,17 +237,20 @@ public class SlashBladeRegistryBridge {
     }
 
     private Object resolveSpecialAttackReference(Object specialAttack) {
-        if (specialAttack instanceof ScriptedSpecialAttackDefinition attackDefinition) {
+        if (specialAttack instanceof ScriptedSpecialAttackDefinition) {
+            ScriptedSpecialAttackDefinition attackDefinition = (ScriptedSpecialAttackDefinition) specialAttack;
             ScriptedSpecialAttack runtime = specialAttacksById.get(attackDefinition.getId());
             if (runtime != null) {
                 return runtime.getNumericId();
             }
-        } else if (specialAttack instanceof String attackId) {
+        } else if (specialAttack instanceof String) {
+            String attackId = (String) specialAttack;
             ScriptedSpecialAttack runtime = specialAttacksById.get(attackId);
             if (runtime != null) {
                 return runtime.getNumericId();
             }
-        } else if (specialAttack instanceof ScriptedSpecialAttack runtime) {
+        } else if (specialAttack instanceof ScriptedSpecialAttack) {
+            ScriptedSpecialAttack runtime = (ScriptedSpecialAttack) specialAttack;
             return runtime.getNumericId();
         }
         return specialAttack;
@@ -259,18 +270,20 @@ public class SlashBladeRegistryBridge {
     }
 
     private Object resolveSpecialEffectReference(Object specialEffect) {
-        if (specialEffect instanceof ScriptedSpecialEffectDefinition effectDefinition) {
+        if (specialEffect instanceof ScriptedSpecialEffectDefinition) {
+            ScriptedSpecialEffectDefinition effectDefinition = (ScriptedSpecialEffectDefinition) specialEffect;
             ScriptedSpecialEffect runtime = specialEffectsById.get(effectDefinition.getId());
             if (runtime != null) {
                 return runtime;
             }
-        } else if (specialEffect instanceof String effectId) {
+        } else if (specialEffect instanceof String) {
+            String effectId = (String) specialEffect;
             ScriptedSpecialEffect runtime = specialEffectsById.get(effectId);
             if (runtime != null) {
                 return runtime;
             }
-        } else if (specialEffect instanceof ISpecialEffect effect) {
-            return effect;
+        } else if (specialEffect instanceof ISpecialEffect) {
+            return specialEffect;
         }
         return specialEffect;
     }
@@ -296,3 +309,7 @@ public class SlashBladeRegistryBridge {
         }
     }
 }
+
+
+
+

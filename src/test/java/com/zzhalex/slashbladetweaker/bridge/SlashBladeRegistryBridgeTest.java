@@ -74,7 +74,7 @@ class SlashBladeRegistryBridgeTest {
 
         bridge.registerQueuedContent();
 
-        assertEquals(List.of(
+        assertEquals(java.util.Arrays.asList(
                 "permissions",
                 "specialAttacks",
                 "specialEffects",
@@ -101,7 +101,7 @@ class SlashBladeRegistryBridgeTest {
 
     @Test
     void postInitDelegatesToTheRegistryBridge() throws IOException {
-        String source = Files.readString(Path.of("src/main/java/com/zzhalex/slashbladetweaker/SlashBladeTweaker.java"));
+        String source = new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get("src/main/java/com/zzhalex/slashbladetweaker/SlashBladeTweaker.java")), java.nio.charset.StandardCharsets.UTF_8);
 
         assertTrue(source.contains("SlashBladeRegistryBridge"));
         assertTrue(source.contains("postInit"));
@@ -135,7 +135,7 @@ class SlashBladeRegistryBridgeTest {
                 true,
                 null,
                 Collections.emptyList(),
-                List.of(new SpecialEffectEntry("slashbladetweaker:void_edge", 20)),
+                java.util.Collections.singletonList(new SpecialEffectEntry("slashbladetweaker:void_edge", 20)),
                 Collections.emptyMap()
         );
     }
@@ -203,3 +203,4 @@ class SlashBladeRegistryBridgeTest {
         }
     }
 }
+
