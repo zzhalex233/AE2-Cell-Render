@@ -47,9 +47,15 @@ public final class DriveRenderSnapshot {
         int dimensionId = input.readInt();
         long positionKey = input.readLong();
         int slotCount = input.readInt();
+        if (slotCount < 1 || slotCount > 64) {
+            throw new IOException("Invalid slot count: " + slotCount);
+        }
         List<byte[]> slots = new ArrayList<>(slotCount);
         for (int i = 0; i < slotCount; i++) {
             int length = input.readInt();
+            if (length < 0 || length > 8192) {
+                throw new IOException("Invalid slot payload size: " + length);
+            }
             byte[] payload = new byte[length];
             input.readFully(payload);
             slots.add(payload);

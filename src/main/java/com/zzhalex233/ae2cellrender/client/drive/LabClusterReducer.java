@@ -159,7 +159,7 @@ final class LabClusterReducer {
                                                int[] assignments) {
         List<ClusterAccumulator> accumulators = new ArrayList<>(centers.size());
         for (int centerIndex = 0; centerIndex < centers.size(); centerIndex++) {
-            accumulators.add(new ClusterAccumulator(centers.get(centerIndex)));
+            accumulators.add(new ClusterAccumulator());
         }
 
         for (int sampleIndex = 0; sampleIndex < samples.size(); sampleIndex++) {
@@ -326,7 +326,7 @@ final class LabClusterReducer {
         private int maxX = Integer.MIN_VALUE;
         private int maxY = Integer.MIN_VALUE;
 
-        private ClusterAccumulator(CellColorMath.LabColor fallbackCenter) {
+        private ClusterAccumulator() {
         }
 
         private void add(CellSpriteWeightedSamples.WeightedSample sample) {

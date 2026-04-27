@@ -1,8 +1,10 @@
 package com.zzhalex233.ae2cellrender.client.drive;
 
 import com.zzhalex233.ae2cellrender.drive.DriveRenderSnapshot;
+import net.minecraft.util.math.BlockPos;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,14 +50,35 @@ public final class DriveRenderCache {
 
     public DriveRenderSnapshot getSnapshot(int dimensionId, long positionKey, int digest) {
         Entry entry = entries.get(key(dimensionId, positionKey));
-        if (entry == null || entry.snapshot == null || entry.snapshotDigest != digest) {
+        if (entry == null) {
             return null;
         }
-        return entry.snapshot;
+        synchronized (entry) {
+            if (entry.snapshot == null || entry.snapshotDigest != digest) {
+                return null;
+            }
+            return entry.snapshot;
+        }
     }
 
     public void clear() {
         entries.clear();
+    }
+
+    public void evictChunk(int dimensionId, int chunkX, int chunkZ) {
+        Iterator<Map.Entry<String, Entry>> iterator = entries.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, Entry> mapEntry = iterator.next();
+            Entry entry = mapEntry.getValue();
+            DriveRenderSnapshot snapshot = entry.snapshot;
+            if (snapshot == null || snapshot.getDimensionId() != dimensionId) {
+                continue;
+            }
+            BlockPos pos = BlockPos.fromLong(snapshot.getPositionKey());
+            if (pos.getX() >> 4 == chunkX && pos.getZ() >> 4 == chunkZ) {
+                iterator.remove();
+            }
+        }
     }
 
     public List<DriveRenderSnapshot> getSnapshots() {

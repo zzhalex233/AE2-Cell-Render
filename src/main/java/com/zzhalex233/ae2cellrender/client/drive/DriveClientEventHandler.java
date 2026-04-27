@@ -78,7 +78,11 @@ public final class DriveClientEventHandler implements IResourceManagerReloadList
             return;
         }
 
-        cache.clear();
+        cache.evictChunk(
+                event.getWorld().provider.getDimension(),
+                event.getChunk().x,
+                event.getChunk().z
+        );
     }
 
     private void markCachedDrivesForRenderUpdate() {

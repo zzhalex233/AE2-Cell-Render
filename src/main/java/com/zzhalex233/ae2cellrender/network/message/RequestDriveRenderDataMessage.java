@@ -62,6 +62,9 @@ public class RequestDriveRenderDataMessage implements IMessage {
         public IMessage onMessage(RequestDriveRenderDataMessage message, MessageContext ctx) {
             EntityPlayerMP player = ctx.getServerHandler().player;
             player.getServerWorld().addScheduledTask(() -> {
+                if (player.world == null) {
+                    return;
+                }
                 TileEntity tile = player.world.getTileEntity(BlockPos.fromLong(message.getPositionKey()));
                 if (tile != null) {
                     DriveRenderHooks.sendToPlayerIfSupported(tile, player);

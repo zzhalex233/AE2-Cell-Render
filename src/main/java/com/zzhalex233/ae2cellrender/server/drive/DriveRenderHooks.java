@@ -1,6 +1,7 @@
 package com.zzhalex233.ae2cellrender.server.drive;
 
 import appeng.tile.storage.TileDrive;
+import com.zzhalex233.ae2cellrender.AE2CellRender;
 import com.zzhalex233.ae2cellrender.client.drive.compat.ae2.Ae2DriveAdapter;
 import com.zzhalex233.ae2cellrender.drive.DriveRenderSnapshot;
 import com.zzhalex233.ae2cellrender.network.AE2CellRenderNetwork;
@@ -64,7 +65,7 @@ public final class DriveRenderHooks {
         return false;
     }
 
-    public static DriveRenderSnapshot capture(TileDrive drive) {
+    private static DriveRenderSnapshot capture(TileDrive drive) {
         return capture(
                 drive.getWorld().provider.getDimension(),
                 drive.getPos().toLong(),
@@ -109,6 +110,9 @@ public final class DriveRenderHooks {
             byte[] bytes = new byte[buffer.readableBytes()];
             buffer.readBytes(bytes);
             return bytes;
+        } catch (Exception e) {
+            AE2CellRender.LOGGER.warn("Failed to serialize drive slot", e);
+            return new byte[0];
         } finally {
             buffer.release();
         }
