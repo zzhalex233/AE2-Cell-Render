@@ -25,7 +25,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public final class CellColorResolver implements IResourceManagerReloadListener {
     private static final float LEGACY_FAMILY_DELTA_E = 18.0F;
@@ -37,10 +36,13 @@ public final class CellColorResolver implements IResourceManagerReloadListener {
     private static final float NEUTRAL_HUE_ANCHOR_MIN_SATURATION = 0.03F;
 
     public static final int NO_COLOR = -1;
+    static final int SERIALIZED_COLOR_CACHE_LIMIT = 512;
+    static final int SERIES_COLOR_CACHE_LIMIT = 256;
     public static final CellColorResolver INSTANCE = new CellColorResolver();
 
-    private final Map<String, Integer> serializedColorCache = new ConcurrentHashMap<>();
-    private final Map<String, Integer> seriesColorCache = new ConcurrentHashMap<>();
+    // Drive contents can vary by NBT; keep caches bounded so long sessions do not retain every stack forever.
+    private final BoundedCache<String, Integer> serializedColorCache = new BoundedCache<>(SERIALIZED_COLOR_CACHE_LIMIT);
+    private final BoundedCache<String, Integer> seriesColorCache = new BoundedCache<>(SERIES_COLOR_CACHE_LIMIT);
 
     private CellColorResolver() {
     }
@@ -95,6 +97,14 @@ public final class CellColorResolver implements IResourceManagerReloadListener {
     public void clear() {
         serializedColorCache.clear();
         seriesColorCache.clear();
+    }
+
+    int serializedColorCacheSizeForTests() {
+        return serializedColorCache.size();
+    }
+
+    int seriesColorCacheSizeForTests() {
+        return seriesColorCache.size();
     }
 
     @Override
@@ -879,6 +889,39 @@ public final class CellColorResolver implements IResourceManagerReloadListener {
 
         private int canonicalColor() {
             return canonicalColor;
+        }
+    }
+
+    private static final class BoundedCache<K, V> {
+        private final int maxEntries;
+        private final LinkedHashMap<K, V> entries;
+
+        private BoundedCache(int maxEntries) {
+            if (maxEntries <= 0) {
+                throw new IllegalArgumentException("Expected positive cache size");
+            }
+            this.maxEntries = maxEntries;
+            this.entries = new LinkedHashMap<>(16, 0.75F, true);
+        }
+
+        private synchronized V get(K key) {
+            return entries.get(key);
+        }
+
+        private synchronized void put(K key, V value) {
+            entries.put(key, value);
+            while (entries.size() > maxEntries) {
+                K eldest = entries.keySet().iterator().next();
+                entries.remove(eldest);
+            }
+        }
+
+        private synchronized void clear() {
+            entries.clear();
+        }
+
+        private synchronized int size() {
+            return entries.size();
         }
     }
 }

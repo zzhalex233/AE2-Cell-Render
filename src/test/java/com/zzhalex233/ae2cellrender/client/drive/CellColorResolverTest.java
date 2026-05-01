@@ -24,6 +24,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CellColorResolverTest {
 
@@ -97,6 +98,28 @@ class CellColorResolverTest {
         int resolved = resolveSerialized(new ItemStack(Items.SOLO_STORAGE_CELL));
 
         assertEquals(CellColorMath.postProcessMainColor(soloFixture.bodyColor), resolved);
+    }
+
+    @Test
+    void colorCachesStayBoundedWhenResolvingManyUniqueTaggedStacks() {
+        GeneratedCellSpriteFixtures.ModelSpriteFixture fixture = GeneratedCellSpriteFixtures.fieryStorageCell1kFixture();
+        register(Items.FIERY_STORAGE_CELL_1K, fixture);
+
+        for (int index = 0; index < CellColorResolver.SERIALIZED_COLOR_CACHE_LIMIT + 64; index++) {
+            NBTTagCompound tag = new NBTTagCompound();
+            tag.setString("nonce", "stack-" + index);
+            int resolved = resolveSerialized(new ItemStack(Items.FIERY_STORAGE_CELL_1K, 1, 0, tag));
+            assertEquals(CellColorMath.postProcessMainColor(fixture.bodyColor), resolved);
+        }
+
+        assertTrue(
+                CellColorResolver.INSTANCE.serializedColorCacheSizeForTests() <= CellColorResolver.SERIALIZED_COLOR_CACHE_LIMIT,
+                "serialized stack cache grew past its cap"
+        );
+        assertTrue(
+                CellColorResolver.INSTANCE.seriesColorCacheSizeForTests() <= CellColorResolver.SERIES_COLOR_CACHE_LIMIT,
+                "series cache grew past its cap"
+        );
     }
 
     @Test
