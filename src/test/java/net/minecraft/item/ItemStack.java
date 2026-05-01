@@ -9,7 +9,6 @@ public class ItemStack {
     private final int count;
     private final int metadata;
     private final NBTTagCompound tagCompound;
-    private final String displayName;
 
     public ItemStack(Item item) {
         this(item, item == null ? 0 : 1, 0, null);
@@ -28,7 +27,6 @@ public class ItemStack {
         this.count = count;
         this.metadata = metadata;
         this.tagCompound = tagCompound;
-        this.displayName = item == null ? null : item.getTranslationKey();
     }
 
     public boolean isEmpty() {
@@ -49,10 +47,6 @@ public class ItemStack {
 
     public int getItemDamage() {
         return metadata;
-    }
-
-    public String getDisplayName() {
-        return displayName;
     }
 
     public NBTTagCompound getTagCompound() {

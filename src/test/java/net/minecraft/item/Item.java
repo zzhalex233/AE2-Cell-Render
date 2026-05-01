@@ -5,10 +5,6 @@ import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 
 public class Item {
-    public enum ToolMaterial {
-        IRON
-    }
-
     private ResourceLocation registryName;
     private String translationKey;
 
