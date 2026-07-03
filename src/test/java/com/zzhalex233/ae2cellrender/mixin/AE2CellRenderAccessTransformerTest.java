@@ -15,8 +15,8 @@ class AE2CellRenderAccessTransformerTest {
     @Test
     void accessTransformerConfigBridgesKnownRuntimeFieldsForCompatibilityTestMods() throws IOException {
         InputStream stream = AE2CellRenderAccessTransformerTest.class.getClassLoader()
-                .getResourceAsStream("ae2cellrender_at.cfg");
-        assertNotNull(stream, "Expected ae2cellrender_at.cfg on the classpath");
+                .getResourceAsStream("META-INF/ae2cellrender_at.cfg");
+        assertNotNull(stream, "Expected META-INF/ae2cellrender_at.cfg on the classpath");
         try {
             String config = readFully(stream);
             assertTrue(config.contains("net.minecraft.item.ItemArmor ARMOR_MODIFIERS"));

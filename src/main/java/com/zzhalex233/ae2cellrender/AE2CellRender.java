@@ -9,19 +9,20 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 @Mod(
-        modid = AE2CellRender.MOD_ID,
-        name = AE2CellRender.MOD_NAME,
-        version = AE2CellRender.VERSION,
+        modid = Reference.MOD_ID,
+        name = Reference.MOD_NAME,
+        version = Reference.VERSION,
         dependencies = "required-after:appliedenergistics2;required-after:mixinbooter"
 )
 public final class AE2CellRender {
 
-    public static final String MOD_ID = "ae2cellrender";
-    public static final String MOD_NAME = "AE2 Cell Render";
-    public static final String VERSION = "2.3";
+    public static final String MOD_ID = Reference.MOD_ID;
+    public static final String MOD_NAME = Reference.MOD_NAME;
+    public static final String VERSION = Reference.VERSION;
     public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
 
     @SidedProxy(
+            modId = Reference.MOD_ID,
             clientSide = "com.zzhalex233.ae2cellrender.proxy.ClientProxy",
             serverSide = "com.zzhalex233.ae2cellrender.proxy.CommonProxy"
     )

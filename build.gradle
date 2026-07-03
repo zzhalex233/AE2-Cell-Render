@@ -2,54 +2,52 @@ plugins {
     id 'java'
     id 'java-library'
     id 'maven-publish'
-    id 'xyz.wagyourtail.unimined' version '1.4.10-kappa'
+    id 'com.gradleup.shadow' version '9.4.1'
+    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.4.1'
+    id 'xyz.wagyourtail.unimined' version '1.4.23-kappa'
+    id 'net.kyori.blossom' version '2.2.0'
 }
 
-apply from: 'gradle/scripts/helpers.gradle'
+import org.jetbrains.gradle.ext.Gradle
 
-def targetJavaVersion = 8
+ext {
+    //noinspection GroovyAssignabilityCheck
+    access_transformer_locations = "${mod_id}_at.cfg"
+    target_java_version = 8
+}
 
-assertProperty 'mod_version'
-assertProperty 'root_package'
-assertProperty 'mod_id'
-assertProperty 'mod_name'
-
-setDefaultProperty 'generate_sources_jar', true, false
-setDefaultProperty 'generate_javadocs_jar', true, false
-setDefaultProperty 'minecraft_username', true, 'Developer'
-setDefaultProperty 'extra_jvm_args', false, ''
-setDefaultProperty 'enable_junit_testing', true, true
-setDefaultProperty 'show_testing_output', true, false
-setDefaultProperty 'enable_lwjglx', true, true
-setDefaultProperty 'publish_to_maven', true, false
-
-version = propertyString('mod_version')
-group = propertyString('root_package')
+version = mod_version
+group = root_package
 
 base {
-    archivesName = propertyString('mod_id')
+    archivesName = mod_id
 }
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        // Build with a modern JDK, but emit Java 8 bytecode via options.release below.
+        languageVersion = JavaLanguageVersion.of(25)
     }
-    if (propertyBool('generate_sources_jar')) {
+    if (generate_sources_jar.toBoolean()) {
         withSourcesJar()
     }
-    if (propertyBool('generate_javadocs_jar')) {
+    if (generate_javadocs_jar.toBoolean()) {
         withJavadocJar()
     }
 }
 
 configurations {
-    embed
-    implementation.extendsFrom(embed)
-    compatibilityTestMods
-    testImplementation.extendsFrom(modImplementation)
-    testRuntimeOnly.extendsFrom(modImplementation)
+    contain
+    implementation.extendsFrom(contain)
+    modCompileOnly
+    compileOnly.extendsFrom(modCompileOnly)
+    modRuntimeOnly
+    runtimeOnly.extendsFrom(modRuntimeOnly)
 }
 
+def remapTaskName = enable_shadow.toBoolean() ? "remapShadowJar" : "remapJar"
+
+//noinspection GroovyAssignabilityCheck
 unimined.minecraft {
     version "1.12.2"
 
@@ -58,132 +56,170 @@ unimined.minecraft {
     }
 
     cleanroom {
-        loader "0.4.4-alpha"
-        runs.auth.username = propertyString('minecraft_username')
+        if (use_access_transformer.toBoolean()) {
+            accessTransformer "${rootProject.projectDir}/src/main/resources/$access_transformer_locations"
+        }
+        loader "0.5.14-alpha"
         runs.all {
-            def extraArgs = propertyString('extra_jvm_args').trim()
-            if (!extraArgs.isEmpty()) {
+            args += ['--username', minecraft_username]
+            def extraArgs = extra_jvm_args
+            if (extraArgs != null && !extraArgs.trim().isEmpty()) {
                 jvmArgs += extraArgs.split("\\s+").toList()
+            }
+            if (enable_foundation_debug.toBoolean()) {
+                systemProperty("foundation.dump", "true")
+                systemProperty("foundation.verbose", "true")
+            }
+            if (is_coremod.toBoolean()) {
+                systemProperty("fml.coreMods.load", coremod_plugin_class_name)
             }
         }
     }
 
     defaultRemapJar = false
 
-    remap(tasks.jar) {
+    String jarTaskName = enable_shadow.toBoolean() ? "shadowJar" : "jar"
+
+    remap(tasks.named(jarTaskName).get()) {
         mixinRemap {
             enableBaseMixin()
             enableMixinExtra()
             disableRefmap()
         }
     }
+
+    mods {
+        remap(configurations.modCompileOnly)
+        remap(configurations.modRuntimeOnly)
+    }
 }
 
-repositories {
-    maven {
-        name 'CurseMaven'
-        url 'https://curse.cleanroommc.com'
-    }
-    maven {
-        name 'Modrinth'
-        url 'https://api.modrinth.com/maven'
-    }
-    mavenLocal()
-}
+apply from: 'gradle/scripts/dependencies.gradle'
 
-dependencies {
-    if (propertyBool('enable_lwjglx')) {
-        compileOnly "com.cleanroommc:lwjglx:1.0.0"
-    }
-    if (propertyBool('enable_junit_testing')) {
-        testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
-        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-        testImplementation 'io.netty:netty-buffer:4.1.94.Final'
-    }
-    compileOnly "com.cleanroommc:sponge-mixin:0.20.12+mixin.0.8.7"
-    modImplementation "curse.maven:ae2-extended-life-570458:6302098"
-    embed("javax.xml.bind:jaxb-api:2.3.1") {
-        transitive = false
-    }
-    compatibilityTestMods "curse.maven:crazyae-1111042:6840104"
-    compatibilityTestMods "curse.maven:ae-additions-extra-cells-2-fork-493962:3814371"
-    compatibilityTestMods "curse.maven:forgelin-continuous-456403:7700023"
-    compatibilityTestMods "curse.maven:mekanism-ce-unofficial-840735:7680340"
-    compatibilityTestMods "curse.maven:mekanism-energistics-1027681:5775101"
-    compatibilityTestMods "curse.maven:ex-pattern-provider-892005:4773929"
-}
 processResources {
-    inputs.property 'mod_id', propertyString('mod_id')
-    inputs.property 'mod_name', propertyString('mod_name')
-    inputs.property 'mod_version', propertyString('mod_version')
-    inputs.property 'mod_description', propertyString('mod_description')
-    inputs.property 'mod_authors', "${propertyStringList('mod_authors', ',').join(', ')}"
-    inputs.property 'mod_credits', propertyString('mod_credits')
-    inputs.property 'mod_url', propertyString('mod_url')
-    inputs.property 'mod_update_json', propertyString('mod_update_json')
-    inputs.property 'mod_logo_path', propertyString('mod_logo_path')
-
-    filesMatching(['mcmod.info', 'pack.mcmeta']) {
-        expand(
-                'mod_id': propertyString('mod_id'),
-                'mod_name': propertyString('mod_name'),
-                'mod_version': propertyString('mod_version'),
-                'mod_description': propertyString('mod_description'),
-                'mod_authors': "${propertyStringList('mod_authors', ',').join(', ')}",
-                'mod_credits': propertyString('mod_credits'),
-                'mod_url': propertyString('mod_url'),
-                'mod_update_json': propertyString('mod_update_json'),
-                'mod_logo_path': propertyString('mod_logo_path')
-        )
-    }
+    rename '(.+_at.cfg)', 'META-INF/$1'
 }
 
-jar {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    manifest {
-        attributes(
-                'FMLCorePlugin': 'com.zzhalex233.ae2cellrender.mixin.AE2CellRenderMixinsCore',
-                'FMLCorePluginContainsFMLMod': true,
-                'ForceLoadAsMod': true
-        )
-    }
-    from(provider {
-        configurations.embed.collect { it.isDirectory() ? it : zipTree(it) }
-    }) {
-        exclude 'META-INF/*.SF'
-        exclude 'META-INF/*.DSA'
-        exclude 'META-INF/*.RSA'
-        exclude 'META-INF/versions/**'
-    }
-    finalizedBy(tasks.named("remapJar"))
-}
-
-def compatibilityTestDropDir = file('local-test-mods/1.12.2')
-
-def syncCompatibilityMods = tasks.register('syncCompatibilityMods', Copy) {
-    description = 'Stages compatibility test mods under run/client/mods/1.12.2 before the client runs.'
-    from(configurations.compatibilityTestMods)
-    includeEmptyDirs = false
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
-    into file('run/client/mods/1.12.2')
-    if (compatibilityTestDropDir.exists()) {
-        from(compatibilityTestDropDir) {
-            include '*.jar'
+sourceSets {
+    main {
+        blossom {
+            javaSources {
+                property('mod_id', mod_id)
+                property('mod_name', mod_name)
+                property('mod_version', mod_version)
+                property('package', "${root_package}.${mod_id}")
+            }
+            resources {
+                property('mod_id', mod_id)
+                property('mod_name', mod_name)
+                property('mod_version', mod_version)
+                property('mod_description', mod_description)
+                property('mod_authors', mod_authors.toString().split(',').findAll { !it.isBlank() }.collect { "\"${it.strip()}\"" }.join(', '))
+                property('mod_credits', mod_credits)
+                property('mod_url', mod_url)
+                property('mod_update_json', mod_update_json)
+                property('mod_logo_path', mod_logo_path)
+            }
         }
     }
 }
 
-tasks.named('runClient') {
-    dependsOn(syncCompatibilityMods)
-    jvmArgs += '-Dfml.coreMods.load=com.zzhalex233.ae2cellrender.mixin.AE2CellRenderMixinsCore'
+idea {
+    module {
+        inheritOutputDirs = true
+    }
+    project {
+        settings {
+            runConfigurations {
+                '1. Build'(Gradle) {
+                    taskNames = ["build"]
+                }
+                '2. Run Client'(Gradle) {
+                    taskNames = ["runClient"]
+                }
+                '3. Run Server'(Gradle) {
+                    taskNames = ["runServer"]
+                }
+            }
+            compiler.javac {
+                afterEvaluate {
+                    javacAdditionalOptions = '-encoding utf8'
+                    moduleJavacAdditionalOptions = [
+                            (project.name + '.main'): tasks.compileJava.options.compilerArgs.collect { "\"${it}\"" }.join(' ')
+                    ]
+                }
+            }
+        }
+    }
+}
+
+if (!enable_shadow.toBoolean()) {
+    shadowJar.enabled = false
+}
+
+compileJava {
+    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
+    options.release.set(target_java_version)
+}
+
+jar {
+    archiveClassifier = 'dev'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    if (configurations.contain.size() > 0) {
+        into('/') {
+            from configurations.contain
+        }
+    }
+    doFirst {
+        manifest {
+            def attribute_map = [:]
+            if (configurations.contain.size() > 0) {
+                attribute_map['ContainedDeps'] = configurations.contain.collect { it.name }.join(' ')
+                attribute_map['NonModDeps'] = true
+            }
+            if (is_coremod.toBoolean()) {
+                attribute_map['FMLCorePlugin'] = coremod_plugin_class_name
+                if (coremod_includes_mod.toBoolean()) {
+                    attribute_map['FMLCorePluginContainsFMLMod'] = true
+                    attribute_map['ForceLoadAsMod'] = true
+                }
+            }
+            if (use_access_transformer.toBoolean()) {
+                attribute_map['FMLAT'] = access_transformer_locations
+            }
+            attributes(attribute_map)
+        }
+    }
+    finalizedBy(tasks.named(remapTaskName).get())
+}
+
+shadowJar {
+    //noinspection GroovyAssignabilityCheck,GroovyAccessibility
+    configurations = [project.configurations.shadow]
+    archiveClassifier = "shadow"
+}
+
+tasks.named(remapTaskName).configure {
+    doFirst {
+        logging.captureStandardOutput LogLevel.INFO
+    }
+    doLast {
+        logging.captureStandardOutput LogLevel.QUIET
+    }
+}
+
+compileTestJava {
+    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
+    options.release.set(target_java_version)
 }
 
 test {
     useJUnitPlatform()
     javaLauncher.set(javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(21)
+        // Tests can run on the build JDK; mod classes are still compiled with --release 8.
+        languageVersion = JavaLanguageVersion.of(25)
     })
-    if (propertyBool('show_testing_output')) {
+    if (show_testing_output.toBoolean()) {
         testLogging {
             showStandardStreams = true
         }
@@ -192,7 +228,7 @@ test {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-    options.release.set(targetJavaVersion)
 }
 
 apply from: 'gradle/scripts/publishing.gradle'
+apply from: 'gradle/scripts/extra.gradle'

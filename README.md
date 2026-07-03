@@ -1,4 +1,4 @@
-﻿# AE2 Cell Render - 1.12.2
+# AE2 Cell Render - 1.12.2
 
 简体中文 | [English](https://github.com/zzhalex233/AE2-Cell-Render/blob/main/README-en_us.md)
 
@@ -20,7 +20,6 @@
 - 需要客户端和服务端同时安装
 
 - 前置：[AE2UEL](https://github.com/AE2-UEL/Applied-Energistics-2)
-- 前置：[MixinBooter](https://github.com/CleanroomMC/MixinBooter)
 
 ## 下载
 
